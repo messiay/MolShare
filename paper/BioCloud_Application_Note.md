@@ -116,38 +116,7 @@ The client-side rendering architecture introduces an inherent limitation: perfor
 
 ### Panel A: System Architecture
 
-```mermaid
-flowchart TB
-    subgraph CLIENT ["🖥️ Client Browser (User Device)"]
-        direction LR
-        REACT["Next.js React App"]
-        THREE["3Dmol.js Engine<br/>(dynamic import)"]
-        WEBGL["WebGL / GPU<br/>(client-side rendering)"]
-        REACT --> THREE --> WEBGL
-    end
-
-    subgraph VERCEL ["☁️ Vercel Edge Network"]
-        direction LR
-        STATIC["Static JS Bundles<br/>(CDN-served)"]
-        PROXY["API Proxy<br/>(no compute overhead)"]
-    end
-
-    subgraph SUPA ["🗄️ Supabase Backend"]
-        direction LR
-        AUTH["Auth (JWT + OAuth)"]
-        PG["PostgreSQL 15 + RLS"]
-        STORE["Object Storage<br/>(.pdb .sdf .mol2 .xyz .cif)"]
-    end
-
-    VERCEL -- "serves static assets" --> CLIENT
-    CLIENT -- "auth + data queries" --> AUTH
-    CLIENT -- "CRUD via PostgREST" --> PG
-    CLIENT -- "fetch structure files" --> STORE
-
-    style CLIENT fill:#eef2ff,stroke:#4f46e5,stroke-width:2px
-    style VERCEL fill:#f9fafb,stroke:#9ca3af
-    style SUPA fill:#f0fdf4,stroke:#16a34a
-```
+![Figure 1A — BioCloud system architecture showing client-side rendering via 3Dmol.js/WebGL, Vercel edge network, and Supabase backend.](figures/mermaid-drawing.png)
 
 > **Key insight:** The Vercel server performs **zero rendering computation**. All molecular visualization is executed entirely on the user's GPU via WebGL. The server cost remains constant regardless of the number of concurrent visualization sessions.
 
@@ -155,71 +124,7 @@ flowchart TB
 
 ### Panel B: Entity-Relationship Diagram (Database)
 
-```mermaid
-erDiagram
-    profiles {
-        uuid id PK
-        text email
-        text full_name
-        text avatar_url
-    }
-
-    projects {
-        uuid id PK
-        uuid owner_id FK
-        text title
-        text file_url
-        text file_extension
-        text csv_file_url
-        boolean is_public
-        text notes
-        timestamptz created_at
-    }
-
-    project_files {
-        uuid id PK
-        uuid project_id FK
-        uuid owner_id FK
-        text file_url
-        text file_extension
-        text file_name
-        integer sort_order
-        timestamptz created_at
-    }
-
-    annotations {
-        uuid id PK
-        uuid project_id FK
-        uuid file_id FK
-        uuid user_id FK
-        integer atom_serial
-        text atom_name
-        text residue_name
-        integer residue_id
-        text chain
-        float x
-        float y
-        float z
-        text content
-        timestamptz created_at
-    }
-
-    comments {
-        uuid id PK
-        uuid project_id FK
-        uuid user_id FK
-        text content
-        timestamptz created_at
-    }
-
-    profiles ||--o{ projects : "owns"
-    profiles ||--o{ comments : "authors"
-    profiles ||--o{ annotations : "authors"
-    projects ||--o{ project_files : "contains (CASCADE)"
-    projects ||--o{ annotations : "has"
-    projects ||--o{ comments : "has"
-    project_files ||--o{ annotations : "references (CASCADE)"
-```
+![Figure 1B — Entity-relationship diagram showing the five principal database tables (Users, Projects, Project_Files, Annotations) and their foreign key relationships.](figures/mermaid-drawing%20(1).png)
 
 ---
 
