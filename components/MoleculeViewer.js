@@ -117,41 +117,54 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
     }, [annotations, loading])
 
     const renderAnnotationMarkers = (viewer, annotations, $3Dmol) => {
-        // Remove existing labels
+        // Remove existing labels and shapes
         viewer.removeAllLabels()
+        viewer.removeAllShapes()
 
-        // Get unique annotated atoms by serial
-        const uniqueAtoms = new Map()
+        // Group all annotations by atom_serial so we can show all comments per atom
+        const atomGroups = new Map()
         annotations.forEach(ann => {
-            if (!uniqueAtoms.has(ann.atom_serial)) {
-                uniqueAtoms.set(ann.atom_serial, ann)
+            if (ann.x == null || ann.y == null || ann.z == null) return
+            if (!atomGroups.has(ann.atom_serial)) {
+                atomGroups.set(ann.atom_serial, { meta: ann, comments: [] })
             }
+            atomGroups.get(ann.atom_serial).comments.push(ann.content || '')
         })
 
-        uniqueAtoms.forEach((ann) => {
-            if (ann.x != null && ann.y != null && ann.z != null) {
-                // Add a small label at the atom position
-                viewer.addLabel(
-                    `💬 ${ann.residue_name || ''}${ann.residue_id || ''}`,
-                    {
-                        position: { x: ann.x, y: ann.y, z: ann.z },
-                        backgroundColor: 'rgba(99, 102, 241, 0.9)',
-                        fontColor: 'white',
-                        fontSize: 10,
-                        borderRadius: 6,
-                        padding: 4,
-                        showBackground: true
-                    }
-                )
+        atomGroups.forEach(({ meta, comments }) => {
+            // Build the label text: residue header + each comment on its own line
+            const header = `💬 ${meta.residue_name || ''}${meta.residue_id || ''}`
+            const commentLines = comments
+                .filter(c => c.trim())
+                .map(c => c.length > 40 ? c.slice(0, 37) + '...' : c)
 
-                // Highlight the atom with a sphere
-                viewer.addSphere({
-                    center: { x: ann.x, y: ann.y, z: ann.z },
-                    radius: 0.6,
-                    color: 'indigo',
-                    opacity: 0.35
-                })
-            }
+            const labelText = commentLines.length > 0
+                ? `${header}\n${commentLines.join('\n')}`
+                : header
+
+            // Add a label showing the comment text at the atom position
+            viewer.addLabel(
+                labelText,
+                {
+                    position: { x: meta.x, y: meta.y, z: meta.z },
+                    backgroundColor: 'rgba(99, 102, 241, 0.92)',
+                    fontColor: 'white',
+                    fontSize: 11,
+                    borderRadius: 8,
+                    padding: 6,
+                    showBackground: true,
+                    backgroundOpacity: 0.92,
+                    inFront: true
+                }
+            )
+
+            // Highlight the atom with a translucent sphere
+            viewer.addSphere({
+                center: { x: meta.x, y: meta.y, z: meta.z },
+                radius: 0.6,
+                color: 'indigo',
+                opacity: 0.35
+            })
         })
     }
 
