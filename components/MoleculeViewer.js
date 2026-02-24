@@ -9,6 +9,7 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
     const $3DmolRef = useRef(null)
 
     useEffect(() => {
+        let isMounted = true
         let viewer = null
         if (!containerRef.current || !url) return
 
@@ -22,6 +23,8 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
 
         // Dynamic import to avoid SSR "window is not defined" error
         import('3dmol').then((module) => {
+            if (!isMounted || !containerRef.current) return Promise.reject(new Error('unmounted'))
+
             $3Dmol = module
             $3DmolRef.current = $3Dmol
 
@@ -34,10 +37,12 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
             return fetch(url)
         })
             .then((res) => {
+                if (!isMounted) return Promise.reject(new Error('unmounted'))
                 if (!res.ok) throw new Error(`Failed to fetch file: ${res.status} ${res.statusText}`)
                 return res.text()
             })
             .then((data) => {
+                if (!isMounted) return
                 if (!data) throw new Error('File is empty')
                 if (data.trim().startsWith('<!DOCTYPE') || data.trim().startsWith('<html')) {
                     throw new Error('File validation failed (Received HTML instead of molecule data). Check file URL access.')
@@ -90,11 +95,17 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                 setLoading(false)
             })
             .catch((err) => {
+                if (err.message === 'unmounted') return
                 console.error('Error loading molecule:', err)
-                setError(err.message)
-                setLoading(false)
+                if (isMounted) {
+                    setError(err.message)
+                    setLoading(false)
+                }
             })
 
+        return () => {
+            isMounted = false
+        }
     }, [url, type])
 
     // Re-render markers when annotations change (without reloading the whole model)
@@ -129,8 +140,7 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                         fontSize: 10,
                         borderRadius: 6,
                         padding: 4,
-                        showBackground: true,
-                        alignment: $3Dmol.SpriteAlignment.topRight
+                        showBackground: true
                     }
                 )
 
