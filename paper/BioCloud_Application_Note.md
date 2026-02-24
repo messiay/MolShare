@@ -8,9 +8,13 @@
 
 ## Abstract
 
-**Motivation:** Three-dimensional visualization of biological macromolecules is fundamental to structural biology and biochemistry education. Existing web-based viewers such as Mol* and NGL Viewer typically rely on server-provisioned compute or complex local installations, creating access barriers for students and early-career researchers operating under institutional resource constraints. Furthermore, no current lightweight platform integrates multi-file comparative viewing with residue-level collaborative annotation within a single, zero-installation interface.
+**Motivation:** Three-dimensional visualization of biological macromolecules is a vital tool in advancing structural biology and biochemistry education. 
 
-**Results:** We present BioCloud, an open-source web platform that performs all molecular rendering client-side via WebGL through the 3Dmol.js library, thereby eliminating server-side compute dependencies entirely. BioCloud supports simultaneous upload and sequential navigation of multiple structure files per project, and implements an atom-level annotation system that enables users to attach spatially-anchored textual comments to individual atoms. Row Level Security policies enforce granular access control, supporting both private and publicly shared projects. Empirical benchmarks demonstrate sub-2-second render times for structures up to 58,870 atoms on commodity laptop hardware. The architecture requires no software installation and operates on any modern web browser.
+Current web-based viewers, including Mol* and NGL Viewer, must be server-based or use complicated local installations, limiting access to students and early-stage researchers with limited institutional budgets. 
+
+In addition, there is no lightweight platform that provides integrated views for comparing multiple files and collaboratively annotating residues at a fine-grained level, all within a single, installation-free interface. 
+
+**Results:** This paper presents BioCloud, an open-source web platform, which performs all molecular rendering client-side using WebGL via the 3Dmol.js library, thus completely removing any server-side compute dependencies. BioCloud allows uploading of multiple structure files per project and sequential navigation between them, as well as the implementation of an annotation system at the atom level, allowing for textual comments anchored in spatial positions on selected atoms by the user. Row Level Security policies provide fine-grained project access control, allowing private and public projects. The loading time renders results in less than two seconds for large structures of up to 58870 atoms on a generic commodity laptop. No installation is necessary, and the software runs on any modern web browser. 
 
 **Availability and Implementation:** BioCloud is implemented in Next.js 14 with a Supabase (PostgreSQL) backend. Source code is available at https://github.com/messiay/biocloud under an open-source license. A public deployment is accessible at https://biocloud-ten.vercel.app.
 
@@ -138,19 +142,19 @@ The client-side rendering architecture introduces an inherent limitation: perfor
 
 ---
 
-### Panel B: Upload Interface with Multi-File Support
+### Panel B: Atom Annotation Popup
 
-![Figure 2B — BioCloud upload interface showing multi-file input for biological structures, CSV data attachment, and notes.](figures/fig2b_upload.png)
+![Figure 2B — The AtomAnnotationPopup showing atom identity (LYS-1220, Chain A), spatial coordinates, and the text input for adding contextual annotations.](figures/fig2b_annotation_popup.png)
 
-*The upload form accepts multiple biological structure files (PDB, SDF, MOL2, etc.) simultaneously, alongside optional CSV data and free-text notes. This interface feeds both the legacy `projects` table and the new `project_files` table.*
+*Clicking any atom in the 3D viewer triggers the AtomAnnotationPopup, which displays the atom's identity (residue, chain, serial number, Cartesian coordinates) and lists any existing annotations. Authenticated users can add new spatially-anchored comments via the text input.*
 
 ---
 
-### Panel C: 3Dmol.js Rendering Benchmark on Commodity Hardware
+### Panel C: Annotation Markers Rendered on the 3D Structure
 
-![Figure 2C — Benchmark results showing 3Dmol.js rendering performance metrics on commodity laptop hardware (AMD Radeon 740M).](figures/fig2c_benchmark.png)
+![Figure 2C — Annotation markers rendered on the 3D structure showing "ASP1150 binding site" as a purple label with translucent indigo sphere at the annotated atom position.](figures/fig2c_annotation_markers.png)
 
-*Rendering benchmark executed on commodity laptop hardware (AMD Radeon 740M, 12 cores, 8 GB RAM). The 3D viewport shows a hemoglobin tetramer (4HHB, 4,779 atoms) rendered in cartoon+stick mode. Console output displays measured render times and FPS metrics.*
+*Saved annotations are rendered as translucent indigo spheres with text labels displaying the full comment content (here, "ASP1150 binding site") directly on the 3D structure. Labels persist across rotations and zoom operations, providing persistent spatial context for collaborative review.*
 
 ---
 
