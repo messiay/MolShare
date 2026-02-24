@@ -116,104 +116,109 @@ The client-side rendering architecture introduces an inherent limitation: perfor
 
 ### Panel A: System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                        CLIENT BROWSER (User Device)                     │
-│                                                                         │
-│   ┌─────────────────┐   ┌──────────────────┐   ┌───────────────────┐   │
-│   │  Next.js React  │──▶│  3Dmol.js Engine  │──▶│  WebGL / GPU      │   │
-│   │  Application    │   │  (dynamic import) │   │  (client-side     │   │
-│   │                 │   │                   │   │   rendering)      │   │
-│   └─────────────────┘   └──────────────────┘   └───────────────────┘   │
-│          │                                                              │
-│          │  *** ZERO server-side rendering compute ***                   │
-└──────────┼──────────────────────────────────────────────────────────────┘
-           │
-     ┌─────┼──────────────────────────────────────────┐
-     │     ▼       VERCEL EDGE NETWORK                │
-     │  ┌──────────────┐  ┌─────────────┐             │
-     │  │ Static JS    │  │  API Proxy  │             │
-     │  │ Bundles      │  │  (no compute│             │
-     │  │ (CDN-served) │  │   overhead) │             │
-     │  └──────────────┘  └──────┬──────┘             │
-     └────────────────────────────┼────────────────────┘
-                                  │
-     ┌────────────────────────────┼────────────────────┐
-     │     SUPABASE BACKEND       ▼                    │
-     │  ┌──────────────┐  ┌──────────────┐             │
-     │  │  Auth (JWT)  │  │ PostgreSQL 15│             │
-     │  │  + OAuth     │  │ + RLS        │             │
-     │  └──────────────┘  └──────────────┘             │
-     │  ┌──────────────────────────────┐               │
-     │  │  Object Storage              │               │
-     │  │  (molecules bucket)          │               │
-     │  │  .pdb .sdf .mol2 .xyz .cif   │               │
-     │  └──────────────────────────────┘               │
-     └─────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph CLIENT ["🖥️ Client Browser (User Device)"]
+        direction LR
+        REACT["Next.js React App"]
+        THREE["3Dmol.js Engine<br/>(dynamic import)"]
+        WEBGL["WebGL / GPU<br/>(client-side rendering)"]
+        REACT --> THREE --> WEBGL
+    end
+
+    subgraph VERCEL ["☁️ Vercel Edge Network"]
+        direction LR
+        STATIC["Static JS Bundles<br/>(CDN-served)"]
+        PROXY["API Proxy<br/>(no compute overhead)"]
+    end
+
+    subgraph SUPA ["🗄️ Supabase Backend"]
+        direction LR
+        AUTH["Auth (JWT + OAuth)"]
+        PG["PostgreSQL 15 + RLS"]
+        STORE["Object Storage<br/>(.pdb .sdf .mol2 .xyz .cif)"]
+    end
+
+    VERCEL -- "serves static assets" --> CLIENT
+    CLIENT -- "auth + data queries" --> AUTH
+    CLIENT -- "CRUD via PostgREST" --> PG
+    CLIENT -- "fetch structure files" --> STORE
+
+    style CLIENT fill:#eef2ff,stroke:#4f46e5,stroke-width:2px
+    style VERCEL fill:#f9fafb,stroke:#9ca3af
+    style SUPA fill:#f0fdf4,stroke:#16a34a
 ```
 
-**Key insight:** The Vercel server performs **zero rendering computation**. All molecular visualization is executed entirely on the user's GPU via WebGL. The server cost remains constant regardless of the number of concurrent visualization sessions.
+> **Key insight:** The Vercel server performs **zero rendering computation**. All molecular visualization is executed entirely on the user's GPU via WebGL. The server cost remains constant regardless of the number of concurrent visualization sessions.
 
 ---
 
-### Panel B: Entity-Relationship Diagram
+### Panel B: Entity-Relationship Diagram (Database)
 
-```
-┌──────────────────────┐
-│       profiles       │
-├──────────────────────┤
-│ id (PK, uuid)        │
-│ email (text)         │
-│ full_name (text)     │
-│ avatar_url (text)    │
-└───────┬──────────────┘
-        │
-        │ 1:N "owns"
-        ▼
-┌──────────────────────┐         ┌─────────────────────────┐
-│       projects       │   1:N   │     project_files       │
-├──────────────────────┤────────▶├─────────────────────────┤
-│ id (PK, uuid)        │CASCADE  │ id (PK, uuid)           │
-│ owner_id (FK→profiles│         │ project_id (FK→projects)│
-│ title (text)         │         │ owner_id (FK→profiles)  │
-│ file_url (text)      │         │ file_url (text)         │
-│ file_extension (text)│         │ file_extension (text)   │
-│ csv_file_url (text)  │         │ file_name (text)        │
-│ is_public (boolean)  │         │ sort_order (integer)    │
-│ notes (text)         │         │ created_at (timestamptz)│
-│ created_at           │         └───────┬─────────────────┘
-└───────┬──────┬───────┘                 │
-        │      │                         │ 1:N CASCADE
-        │      │ 1:N                     ▼
-        │      │              ┌─────────────────────────┐
-        │      │              │      annotations        │
-        │      └─────────────▶├─────────────────────────┤
-        │         1:N         │ id (PK, uuid)           │
-        │                     │ project_id (FK→projects)│
-        │                     │ file_id (FK→proj_files) │
-        │                     │ user_id (FK→profiles)   │
-        │                     │ atom_serial (integer)   │
-        │                     │ atom_name (text)        │
-        │                     │ residue_name (text)     │
-        │                     │ residue_id (integer)    │
-        │                     │ chain (text)            │
-        │                     │ x, y, z (float)         │
-        │                     │ content (text)          │
-        │                     │ created_at (timestamptz)│
-        │                     └─────────────────────────┘
-        │ 1:N
-        ▼
-┌──────────────────────┐
-│       comments       │
-├──────────────────────┤
-│ id (PK, uuid)        │
-│ project_id (FK)      │
-│ user_id (FK→profiles)│
-│ content (text)       │
-│ created_at           │
-└──────────────────────┘
+```mermaid
+erDiagram
+    profiles {
+        uuid id PK
+        text email
+        text full_name
+        text avatar_url
+    }
 
-Legend: PK = Primary Key, FK = Foreign Key, CASCADE = ON DELETE CASCADE
+    projects {
+        uuid id PK
+        uuid owner_id FK
+        text title
+        text file_url
+        text file_extension
+        text csv_file_url
+        boolean is_public
+        text notes
+        timestamptz created_at
+    }
+
+    project_files {
+        uuid id PK
+        uuid project_id FK
+        uuid owner_id FK
+        text file_url
+        text file_extension
+        text file_name
+        integer sort_order
+        timestamptz created_at
+    }
+
+    annotations {
+        uuid id PK
+        uuid project_id FK
+        uuid file_id FK
+        uuid user_id FK
+        integer atom_serial
+        text atom_name
+        text residue_name
+        integer residue_id
+        text chain
+        float x
+        float y
+        float z
+        text content
+        timestamptz created_at
+    }
+
+    comments {
+        uuid id PK
+        uuid project_id FK
+        uuid user_id FK
+        text content
+        timestamptz created_at
+    }
+
+    profiles ||--o{ projects : "owns"
+    profiles ||--o{ comments : "authors"
+    profiles ||--o{ annotations : "authors"
+    projects ||--o{ project_files : "contains (CASCADE)"
+    projects ||--o{ annotations : "has"
+    projects ||--o{ comments : "has"
+    project_files ||--o{ annotations : "references (CASCADE)"
 ```
 
 ---
