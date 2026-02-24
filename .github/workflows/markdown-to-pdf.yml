@@ -1,0 +1,29 @@
+name: Markdown to PDF
+
+on:
+  push:
+    paths:
+      - 'paper/**'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Markdown to PDF Converter
+        uses: narthanaj/markdown-to-pdf-action@v2.0.0
+        with:
+          input_path: paper/BioCloud_Application_Note.md
+          output_path: paper/BioCloud_Application_Note.pdf
+          image_import: paper
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BioCloud-Application-Note-PDF
+          path: paper/BioCloud_Application_Note.pdf
