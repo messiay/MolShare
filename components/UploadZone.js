@@ -145,9 +145,8 @@ export default function UploadZone() {
             setJobName('')
             setNotes('')
 
-            // Refresh local data
-            router.refresh()
-            alert('Job submitted successfully!')
+            // Navigate to the newly created project
+            router.push(`/view/${projectData.id}`)
 
         } catch (error) {
             console.error(error)
