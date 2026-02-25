@@ -36,7 +36,7 @@ File storage and relational data are handled by Supabase [5]. Large coordinate f
 
 ### 2.3. Client-Side Rendering (3Dmol.js)
 
-In order to avoid the computational hurdles associated with server-side rendering, BioCloud employs a stringent form of Client-Side Rendering (CSR). When one accesses a URL for a project, the unrefined structural files are sent directly to the browser. The system then relies on the 3Dmol.js [1] library to tap into the local WebGL context of the user, rendering the molecule directly on the user's machine. This enables one to achieve a smooth framerate even on a student laptop with integrated graphics (Table 1).
+In order to avoid the computational hurdles associated with server-side rendering, MolShare employs a stringent form of Client-Side Rendering (CSR). When one accesses a URL for a project, the unrefined structural files are sent directly to the browser. The system then relies on the 3Dmol.js [1] library to tap into the local WebGL context of the user, rendering the molecule directly on the user's machine. This enables one to achieve a smooth framerate even on a student laptop with integrated graphics (Table 1).
 
 ---
 
@@ -44,17 +44,17 @@ In order to avoid the computational hurdles associated with server-side renderin
 
 ### 3.1. Multi-File and Data Integration
 
-Unlike conventional single-file browsers, BioCloud allows for the simultaneous upload of multiple 3D files and CSV data into a single project. This allows for rapid comparative analysis, such as comparing multiple docked poses or wild-type versus mutant structures within the same browser window.
+Unlike conventional single-file browsers, MolShare allows for the simultaneous upload of multiple 3D files and CSV data into a single project. This allows for rapid comparative analysis, such as comparing multiple docked poses or wild-type versus mutant structures within the same browser window.
 
 ### 3.2. Spatially-Anchored Annotations
 
-To overcome the "screenshot problem," BioCloud includes an interactive annotation tool. Users can click on any particular atom within the 3D viewer to launch an annotation pop-up. Annotations are stored within the database and displayed as semi-transparent spheres and text labels directly on the 3D molecule. When a collaborator clicks on the shared link, they see the very same highlighted residues immediately, cutting down on potential communication errors by orders of magnitude.
+To overcome the "screenshot problem," MolShare includes an interactive annotation tool. Users can click on any particular atom within the 3D viewer to launch an annotation pop-up. Annotations are stored within the database and displayed as semi-transparent spheres and text labels directly on the 3D molecule. When a collaborator clicks on the shared link, they see the very same highlighted residues immediately, cutting down on potential communication errors by orders of magnitude.
 
 ---
 
 ## 4. Conclusion
 
-BioCloud democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation.
+MolShare democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation.
 
 ---
 
