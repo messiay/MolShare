@@ -67,13 +67,16 @@ export default function Dashboard() {
             }
 
             // Fetch projects shared with the user (visited but not owned)
-            const { data: viewedData } = await supabase
+            const { data: viewedData, error: viewedError } = await supabase
                 .from('project_views')
                 .select('project_id, viewed_at, projects ( id, title, file_extension, owner_id, created_at, profiles:owner_id ( email, full_name ) )')
                 .eq('viewer_id', user.id)
                 .order('viewed_at', { ascending: false })
 
-            if (viewedData) {
+            if (viewedError) {
+                console.error('Error fetching shared projects:', viewedError)
+            } else if (viewedData) {
+                console.log('Viewed data:', viewedData)
                 // Deduplicate by project_id and exclude owned projects
                 const seen = new Set()
                 const shared = viewedData
@@ -228,28 +231,30 @@ export default function Dashboard() {
             </section>
 
             {/* Shared With Me Section */}
-            {sharedProjects.length > 0 && (
-                <section className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-sm">
-                    <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-                        <Link2 className="w-4 h-4 text-blue-500" />
-                        <h2 className="text-sm font-semibold text-gray-900 tracking-wide">Shared With Me</h2>
+            <section className="bg-white rounded-2xl border border-gray-200/60 overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-2">
+                    <Link2 className="w-4 h-4 text-blue-500" />
+                    <h2 className="text-sm font-semibold text-gray-900 tracking-wide">Shared With Me</h2>
+                    {sharedProjects.length > 0 && (
                         <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full font-medium">{sharedProjects.length}</span>
-                    </div>
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-100">
-                            <thead>
-                                <tr>
-                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Project Name</th>
-                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Format</th>
-                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Shared By</th>
-                                    <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Last Viewed</th>
-                                    <th scope="col" className="relative px-6 py-4">
-                                        <span className="sr-only">Actions</span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {sharedProjects.map((sp) => (
+                    )}
+                </div>
+                <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-100">
+                        <thead>
+                            <tr>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Project Name</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Format</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Shared By</th>
+                                <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-400 tracking-wider">Last Viewed</th>
+                                <th scope="col" className="relative px-6 py-4">
+                                    <span className="sr-only">Actions</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {sharedProjects.length > 0 ? (
+                                sharedProjects.map((sp) => (
                                     <tr
                                         key={sp.id}
                                         onClick={() => router.push(`/view/${sp.id}`)}
@@ -291,12 +296,20 @@ export default function Dashboard() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            )}
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="5" className="px-6 py-12 text-center">
+                                        <Link2 className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                                        <p className="text-sm text-gray-500">No shared projects yet.</p>
+                                        <p className="text-xs text-gray-400 mt-1">When someone shares a project link with you and you visit it, it will appear here.</p>
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
         </div>
     )
 }
