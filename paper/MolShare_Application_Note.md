@@ -32,7 +32,7 @@ The client-side application is developed using the Next.js React framework and h
 
 ### 2.2. Backend Data Persistence (Supabase)
 
-File storage and relational data are handled by Supabase. Large coordinate files (.pdb, .cif) and corresponding datasets (.csv) are stored in object storage. A PostgreSQL database is the ledger for the application. Most importantly, when an annotation is created by a user, the database stores the precise Cartesian coordinates (X, Y, Z) of the chosen atom, thus irrevocably associating the user's text note with that particular point in space in the project. Row Level Security (RLS) policies enable the private or safe public sharing of projects through public URLs.
+File storage and relational data are handled by Supabase. Large coordinate files (.pdb, .cif) and corresponding datasets (.csv) are stored in object storage. A PostgreSQL database is the ledger for the application. Most importantly, when an annotation is created by a user, the database stores the precise Cartesian coordinates (X, Y, Z) of the chosen atom, thus irrevocably associating the user's text note with that particular point in space in the project. Row Level Security (RLS) policies enable the private or safe public sharing of projects through public URLs. Strict Row Level Security policies enforce owner-only write privileges, ensuring that while invited collaborators can interactively view the 3D state and read annotations, only the original project owner can append new spatial data. A dedicated 'Shared With Me' dashboard automatically tracks and routes authenticated users to projects they have been invited to view.
 
 ### 2.3. Client-Side Rendering (3Dmol.js)
 
@@ -74,15 +74,17 @@ Artificial intelligence software (Google Gemini, Antigravity) was employed to he
 
 ### Panel B: Entity-Relationship Diagram (Database)
 
-![Figure 1B — Entity-relationship diagram showing the five principal database tables (Users, Projects, Project_Files, Annotations) and their foreign key relationships.](figures/mermaid-drawing%20(1).png)
+![Figure 1B — Entity-relationship diagram showing the six principal database tables (Users, Projects, Project_Files, Annotations, Project_Views) and their foreign key relationships.](figures/mermaid-drawing%20(1).png)
 
 ---
 
 ## Figure 2 — User Interface
 
-### Panel A: Dashboard with Multi-File Upload & Project Table
+### Panel A: Dashboard with Repository & Shared With Me
 
-![Figure 2A — MolShare dashboard showing the multi-file upload form and project repository table with the Files count column.](figures/fig2a_dashboard.png)
+![Figure 2A — MolShare dashboard showing the project repository table with owned projects and the Shared With Me section displaying a collaboratively shared project.](figures/fig2a_dashboard.png)
+
+*The dashboard displays the project repository (top) listing the user's own projects with file counts, view counts, upload dates, and privacy status. Below it, the **Shared With Me** section shows projects that other users have shared with the current user, including the project owner's identity and the date it was last viewed—demonstrating MolShare's real-time collaborative workflow.*
 
 ---
 
