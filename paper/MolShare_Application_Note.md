@@ -16,17 +16,15 @@
 
 Three-dimensional molecular visualization is essential to structural biology. Interpreting binding sites, protein-ligand interactions, and active site topology requires spatial context that flat sequence data cannot provide. Yet despite this necessity, collaborative structural analysis still relies on fragmented workflows — researchers share static screenshots, email raw .pdb files, or export complex session scripts, all of which strip away interactive context and place the burden of reconstruction on the recipient.
 
-In spite of the necessity of Three-Dimensional visualization, the collaborative structural analysis relies on highly disoriented workflows. While powerful web-based viewers like Mol* [2] and NGL Viewer [3] provide excellent visualization, they primarily function as standalone viewers rather than native, multi-file collaborative workspaces. When A Researcher or a student needs to highlight a binding site, the most common way to capture it is to send a two-dimensional static screenshot or images and manually indicate drawing over it or by sending in a standalone .pdb or .pdbqt file via email. This fragmented approach removes the interactive context and the placement burden on the receiver's end to download and use the correct file, ensuring that they have the necessary desktop software installed and manually locate the exact region of interest.
+While powerful web-based viewers like Mol* [2], NGL Viewer [3], and iCn3D [6] provide excellent visualization, they primarily function as standalone viewers rather than native, multi-file collaborative workspaces. When a researcher or a student needs to highlight a binding site, the most common way to capture it is to send a two-dimensional static screenshot and manually indicate regions of interest, or to send a standalone .pdb file via email. This fragmented approach strips away interactive context and places the burden of reconstruction on the recipient — requiring them to have the necessary desktop software installed and to manually locate the exact region of interest. None of these tools provide an intrinsic multi-file architecture for users to upload proprietary PDB files in a secure environment while also being able to upload CSV data and anchor persistent spatial comments on molecular structures. MolShare addresses these concerns by providing a dedicated URL-routable cloud workspace for collaborative structural biology.
 
-Mol* [2], NGL Viewer [3] and iCn3D from the NIH provide excellent 3D view capabilities on their own, but there was no central location for shared collaboration among all users of these tools. Users often exported very complex state scripts or session files for sharing a single point of view in these tools. None of these tools provide an intrinsic multi-file architecture for users to upload proprietary PDB's in a secure environment while also being able to upload CSV file's and anchor persistent spatial comments on the PDB's. MolShare addresses these concerns by providing a dedicated URL-routable cloud workspace for collaborative structural biology.
-
-MolShare addresses these structural bottlenecks by unifying interaction, Three-Dimensional visuals, metadata storage, and immediate and direct collaboration into a single shareable web link. Enabling spatially-Anchored, molecule-wise annotation, the platform ensures that all collaborators are viewing the exact same interactive three-dimensional state without requiring any local software installations or specialised computer hardware.
+MolShare unifies interaction, three-dimensional visuals, metadata storage, and direct collaboration into a single shareable web link. Through spatially-anchored, atom-wise annotation, the platform ensures that all collaborators are viewing the exact same interactive three-dimensional state without requiring any local software installations or specialised computer hardware.
 
 ---
 
 ## 2. Architecture and Implementation
 
-MolShare employs a new, Serverless web architecture that is designed to eliminate the need for a centralised graphical processing. The System Composed of three primary layers:
+MolShare employs a serverless web architecture designed to eliminate the need for centralised graphical processing. The system consists of three primary layers:
 
 ### 2.1 Frontend User Interface
 
@@ -62,7 +60,7 @@ MolShare removes two longstanding barriers in collaborative structural biology: 
 
 ## Acknowledgements
 
-Artificial intelligence coding assistants (Antigravity) and large language models (Google Gemini) were utilized to assist in codebase generation, formatting, and structural outlining of this manuscript, in accordance with journal policies.
+Large language models (Google Gemini) were used to assist with codebase generation and manuscript drafting, in accordance with journal policies.
 
 ---
 
@@ -142,3 +140,5 @@ Artificial intelligence coding assistants (Antigravity) and large language model
 [4] Vercel Inc. (2024). Next.js: The React Framework for the Web. Version 14. Retrieved from https://nextjs.org
 
 [5] Supabase Inc. (2024). Supabase: The Open Source Firebase Alternative. Retrieved from https://supabase.com
+
+[6] Wang, J., et al. (2022). iCn3D: web-based 3D viewer for sharing 1D/2D/3D representations of biomolecular structures. *Bioinformatics*, **38**(5), 1422–1423.
