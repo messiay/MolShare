@@ -28,15 +28,15 @@ MolShare employs a new, Serverless web architecture that is designed to eliminat
 
 ### 2.1 Frontend User Interface
 
-The client-side application is developed using the Next.js React framework and hosted on the Vercel Edge Network. This layer serves as the centralised workspace, dealing with user authentication, project routing, and the multi-file carousel interface that enables users to easily switch between different molecular representations.
+The client-side application is developed using the Next.js [4] React framework and hosted on the Vercel Edge Network. This layer serves as the centralised workspace, dealing with user authentication, project routing, and the multi-file carousel interface that enables users to easily switch between different molecular representations.
 
 ### 2.2. Backend Data Persistence (Supabase)
 
-File storage and relational data are handled by Supabase. Large coordinate files (.pdb, .cif) and corresponding datasets (.csv) are stored in object storage. A PostgreSQL database is the ledger for the application. Most importantly, when an annotation is created by a user, the database stores the precise Cartesian coordinates (X, Y, Z) of the chosen atom, thus irrevocably associating the user's text note with that particular point in space in the project. Row Level Security (RLS) policies enable the private or safe public sharing of projects through public URLs. Strict Row Level Security policies enforce owner-only write privileges, ensuring that while invited collaborators can interactively view the 3D state and read annotations, only the original project owner can append new spatial data. A dedicated 'Shared With Me' dashboard automatically tracks and routes authenticated users to projects they have been invited to view.
+File storage and relational data are handled by Supabase [5]. Large coordinate files (.pdb, .cif) and corresponding datasets (.csv) are stored in object storage. A PostgreSQL database is the ledger for the application. Most importantly, when an annotation is created by a user, the database stores the precise Cartesian coordinates (X, Y, Z) of the chosen atom, thus irrevocably associating the user's text note with that particular point in space in the project. Row Level Security (RLS) policies enable the private or safe public sharing of projects through public URLs. Strict Row Level Security policies enforce owner-only write privileges, ensuring that while invited collaborators can interactively view the 3D state and read annotations, only the original project owner can append new spatial data. A dedicated 'Shared With Me' dashboard automatically tracks and routes authenticated users to projects they have been invited to view.
 
 ### 2.3. Client-Side Rendering (3Dmol.js)
 
-In order to avoid the computational hurdles associated with server-side rendering, BioCloud employs a stringent form of Client-Side Rendering (CSR). When one accesses a URL for a project, the unrefined structural files are sent directly to the browser. The system then relies on the 3Dmol.js library to tap into the local WebGL context of the user, rendering the molecule directly on the user's machine. This enables one to achieve a smooth framerate even on a student laptop with integrated graphics (Table 1).
+In order to avoid the computational hurdles associated with server-side rendering, BioCloud employs a stringent form of Client-Side Rendering (CSR). When one accesses a URL for a project, the unrefined structural files are sent directly to the browser. The system then relies on the 3Dmol.js [1] library to tap into the local WebGL context of the user, rendering the molecule directly on the user's machine. This enables one to achieve a smooth framerate even on a student laptop with integrated graphics (Table 1).
 
 ---
 
@@ -126,3 +126,17 @@ Artificial intelligence software (Google Gemini, Antigravity) was employed to he
 ![Benchmark results (Hardware info + 4HHB) — showing AMD Radeon 740M GPU, 12 cores, 8 GB RAM, and Hemoglobin render time of 494ms.](figures/fig_benchmark_top.png)
 
 ![Benchmark results (1JFF + 1AON) — showing Glutamate DH render time of 308ms at 23.8 FPS, and GroEL FPS measurement of 23.2.](figures/fig_benchmark_results.png)
+
+---
+
+## References
+
+[1] Rego, N., & Koes, D. (2015). 3Dmol.js: molecular visualization with WebGL. *Bioinformatics*, **31**(8), 1322–1324.
+
+[2] Sehnal, D., et al. (2021). Mol* Viewer: modern web app for 3D macromolecular structure visualization. *Nucleic Acids Research*, **49**(W1), W431–W437.
+
+[3] Rose, A. S., et al. (2018). NGL viewer: web-based molecular graphics for large complexes. *Bioinformatics*, **34**(21), 3755–3758.
+
+[4] Vercel Inc. (2024). Next.js: The React Framework for the Web. Retrieved from https://nextjs.org
+
+[5] Supabase Inc. (2024). Supabase: The Open Source Firebase Alternative. Retrieved from https://supabase.com
