@@ -8,7 +8,7 @@ import CsvViewer from '@/components/CsvViewer'
 import InteractionPanel from '@/components/InteractionPanel'
 import FileCarousel from '@/components/FileCarousel'
 import AtomAnnotationPopup from '@/components/AtomAnnotationPopup'
-import { ArrowLeft, Download, Share2, Loader2, Database, Box, FileText, UploadCloud, Plus } from 'lucide-react'
+import { ArrowLeft, Download, Share2, Loader2, Database, Box, FileText, UploadCloud, Plus, Copy, Check, Link2 } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ViewPage() {
@@ -19,6 +19,8 @@ export default function ViewPage() {
     const [loading, setLoading] = useState(true)
     const [activeView, setActiveView] = useState('3d') // '3d' | 'csv'
     const [uploadingCsv, setUploadingCsv] = useState(false)
+    const [showShareLink, setShowShareLink] = useState(false)
+    const [copied, setCopied] = useState(false)
 
     const [ownerProfile, setOwnerProfile] = useState(null)
 
@@ -40,8 +42,8 @@ export default function ViewPage() {
         const { data: { user } } = await supabase.auth.getUser()
         setUser(user)
 
-        // 1. Log View
-        supabase.from('project_views').insert({ project_id: id }).then(({ error }) => {
+        // 1. Log View (include viewer_id for shared-with-me tracking)
+        supabase.from('project_views').insert({ project_id: id, viewer_id: user?.id || null }).then(({ error }) => {
             if (error) console.error('Error logging view:', error)
         })
 
@@ -182,9 +184,15 @@ export default function ViewPage() {
 
     const isOwner = user?.id === project.owner_id
 
-    const copyLink = () => {
+    const toggleShareLink = () => {
+        setShowShareLink(prev => !prev)
+        setCopied(false)
+    }
+
+    const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href)
-        alert('Link copied to clipboard')
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     // Get active file
@@ -265,7 +273,7 @@ export default function ViewPage() {
                                 url={activeFile?.file_url}
                                 type={activeFile?.file_extension}
                                 annotations={activeFileAnnotations}
-                                onAtomClick={handleAtomClick}
+                                onAtomClick={isOwner ? handleAtomClick : undefined}
                             />
 
                             {/* Atom Annotation Popup */}
@@ -302,7 +310,7 @@ export default function ViewPage() {
                             </span>
                             <div className="flex flex-col gap-2 mt-4">
                                 <div className="flex gap-2">
-                                    <button onClick={copyLink} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors text-sm font-medium">
+                                    <button onClick={toggleShareLink} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${showShareLink ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
                                         <Share2 className="w-4 h-4" />
                                         Share
                                     </button>
@@ -311,6 +319,26 @@ export default function ViewPage() {
                                         Structure
                                     </a>
                                 </div>
+                                {showShareLink && (
+                                    <div className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
+                                        <Link2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                        <input
+                                            readOnly
+                                            value={typeof window !== 'undefined' ? window.location.href : ''}
+                                            className="flex-1 text-xs bg-transparent border-0 text-gray-600 focus:ring-0 font-mono truncate p-0"
+                                            onClick={(e) => e.target.select()}
+                                        />
+                                        <button
+                                            onClick={handleCopyLink}
+                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all flex-shrink-0 ${copied
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                                                }`}
+                                        >
+                                            {copied ? <><Check className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+                                        </button>
+                                    </div>
+                                )}
                                 {project.csv_file_url && (
                                     <a href={project.csv_file_url} download className="flex items-center justify-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors text-sm font-medium">
                                         <FileText className="w-4 h-4" />

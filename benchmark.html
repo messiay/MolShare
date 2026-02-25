@@ -1,18 +1,43 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <title>BioCloud 3Dmol.js Benchmark</title>
+    <title>MolShare 3Dmol.js Benchmark</title>
     <script src="https://3Dmol.org/build/3Dmol-min.js"></script>
     <style>
-        body { font-family: monospace; background: #111; color: #0f0; padding: 20px; }
-        #viewer { width: 800px; height: 600px; border: 1px solid #333; margin: 10px 0; }
-        #log { white-space: pre-wrap; font-size: 13px; line-height: 1.6; max-height: 400px; overflow-y: auto; }
-        button { padding: 8px 16px; margin: 4px; cursor: pointer; }
+        body {
+            font-family: monospace;
+            background: #111;
+            color: #0f0;
+            padding: 20px;
+        }
+
+        #viewer {
+            width: 800px;
+            height: 600px;
+            border: 1px solid #333;
+            margin: 10px 0;
+        }
+
+        #log {
+            white-space: pre-wrap;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 4px;
+            cursor: pointer;
+        }
     </style>
 </head>
+
 <body>
-    <h2>BioCloud Rendering Benchmark</h2>
-    <p>Tests the exact same 3Dmol.js/WebGL pipeline used by BioCloud.</p>
+    <h2>MolShare Rendering Benchmark</h2>
+    <p>Tests the exact same 3Dmol.js/WebGL pipeline used by MolShare.</p>
     <div id="viewer"></div>
     <div>
         <button onclick="runBenchmark('4HHB', '~4,400')">Test ~4.4K atoms (4HHB Hemoglobin)</button>
@@ -60,7 +85,7 @@
             container.innerHTML = '';
 
             const t0 = performance.now();
-            log(`[${(performance.now()-t0).toFixed(0)}ms] Fetching PDB from RCSB...`);
+            log(`[${(performance.now() - t0).toFixed(0)}ms] Fetching PDB from RCSB...`);
 
             try {
                 const resp = await fetch(`https://files.rcsb.org/download/${pdbId}.pdb`);
@@ -71,14 +96,14 @@
 
                 // Count atoms
                 const atomCount = (data.match(/^ATOM  /gm) || []).length + (data.match(/^HETATM/gm) || []).length;
-                log(`[${fetchTime}ms] Fetched. File size: ${(data.length/1024).toFixed(0)} KB, Atoms: ${atomCount}`);
+                log(`[${fetchTime}ms] Fetched. File size: ${(data.length / 1024).toFixed(0)} KB, Atoms: ${atomCount}`);
 
                 // Create viewer
                 const tViewerStart = performance.now();
                 currentViewer = $3Dmol.createViewer(container, { backgroundColor: 'white' });
                 currentViewer.addModel(data, 'pdb');
 
-                // Apply same styles as BioCloud MoleculeViewer
+                // Apply same styles as MolShare MoleculeViewer
                 currentViewer.setStyle({}, { cartoon: { color: 'spectrum' }, stick: {} });
                 currentViewer.zoomTo();
                 currentViewer.render();
@@ -90,14 +115,14 @@
                 log(`[${totalTime}ms] Render complete.`);
                 log(`  Fetch time:  ${fetchTime} ms`);
                 log(`  Render time: ${renderTime} ms`);
-                log(`  TOTAL (load-to-render): ${totalTime} ms = ${(totalTime/1000).toFixed(2)} s`);
+                log(`  TOTAL (load-to-render): ${totalTime} ms = ${(totalTime / 1000).toFixed(2)} s`);
                 log(`  Atom count: ${atomCount}`);
 
                 // Also measure second render (warm)
                 const t2 = performance.now();
                 currentViewer.render();
                 const t3 = performance.now();
-                log(`  Re-render (warm): ${(t3-t2).toFixed(1)} ms`);
+                log(`  Re-render (warm): ${(t3 - t2).toFixed(1)} ms`);
 
             } catch (e) {
                 log('ERROR: ' + e.message);
@@ -130,4 +155,5 @@
         }
     </script>
 </body>
+
 </html>

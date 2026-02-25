@@ -5,7 +5,7 @@ import { Inter } from 'next/font/google'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'BioCloud - Universal Biological File Platform',
+  title: 'MolShare - Universal Biological File Platform',
   description: 'Visualize, Store, and Share Biological Data effortlessly.',
   icons: {
     icon: '/logo.png',

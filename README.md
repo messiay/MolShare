@@ -1,8 +1,8 @@
-# BioCloud 🧬
+# MolShare 🧬
 
-**BioCloud** is a universal biological file SaaS platform designed to visualize, store, and share molecular structures effortlessly.
+**MolShare** is a universal biological file SaaS platform designed to visualize, store, and share molecular structures effortlessly.
 
-![BioCloud Hero](https://via.placeholder.com/1200x600?text=BioCloud+Dashboard)
+![MolShare Hero](https://via.placeholder.com/1200x600?text=MolShare+Dashboard)
 
 ## 🚀 Features
 

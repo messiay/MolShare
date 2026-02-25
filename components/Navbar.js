@@ -23,7 +23,7 @@ export default function Navbar() {
         await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: `${window.location.origin}/dashboard`,
+                redirectTo: window.location.href,
             },
         })
     }
@@ -39,13 +39,13 @@ export default function Navbar() {
                 <div className="relative w-12 h-12">
                     <Image
                         src="/logo.png"
-                        alt="BioCloud Logo"
+                        alt="MolShare Logo"
                         fill
                         className="object-contain"
                         priority
                     />
                 </div>
-                <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">BioCloud</span>
+                <span className="bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">MolShare</span>
             </Link>
 
             <div className="flex items-center gap-4">

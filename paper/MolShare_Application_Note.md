@@ -1,4 +1,4 @@
-# BioCloud: a browser-native platform for collaborative molecular structure visualization and annotation
+# MolShare: a browser-native platform for collaborative molecular structure visualization and annotation
 
 **Authors:** [Author list to be finalized]
 
@@ -14,9 +14,9 @@ Current web-based viewers, including Mol* and NGL Viewer, must be server-based o
 
 In addition, there is no lightweight platform that provides integrated views for comparing multiple files and collaboratively annotating residues at a fine-grained level, all within a single, installation-free interface. 
 
-**Results:** This paper presents BioCloud, an open-source web platform, which performs all molecular rendering client-side using WebGL via the 3Dmol.js library, thus completely removing any server-side compute dependencies. BioCloud allows uploading of multiple structure files per project and sequential navigation between them, as well as the implementation of an annotation system at the atom level, allowing for textual comments anchored in spatial positions on selected atoms by the user. Row Level Security policies provide fine-grained project access control, allowing private and public projects. The loading time renders results in less than two seconds for large structures of up to 58870 atoms on a generic commodity laptop. No installation is necessary, and the software runs on any modern web browser. 
+**Results:** This paper presents MolShare, an open-source web platform, which performs all molecular rendering client-side using WebGL via the 3Dmol.js library, thus completely removing any server-side compute dependencies. MolShare allows uploading of multiple structure files per project and sequential navigation between them, as well as the implementation of an annotation system at the atom level, allowing for textual comments anchored in spatial positions on selected atoms by the user. Row Level Security policies provide fine-grained project access control, allowing private and public projects. The loading time renders results in less than two seconds for large structures of up to 58870 atoms on a generic commodity laptop. No installation is necessary, and the software runs on any modern web browser. 
 
-**Availability and Implementation:** BioCloud is implemented in Next.js 14 with a Supabase (PostgreSQL) backend. Source code is available at https://github.com/messiay/biocloud under an open-source license. A public deployment is accessible at https://biocloud-ten.vercel.app.
+**Availability and Implementation:** MolShare is implemented in Next.js 14 with a Supabase (PostgreSQL) backend. Source code is available at https://github.com/messiay/molshare under an open-source license. A public deployment is accessible at https://molshare-ten.vercel.app.
 
 ---
 
@@ -28,13 +28,13 @@ A persistent challenge in academic settings is the *computational accessibility 
 
 Equally underserved is the need for *contextual collaboration* on structural data. While general-purpose platforms enable file sharing, no lightweight tool currently permits users to attach annotations directly to individual atoms within a three-dimensional structural context and share those annotations with collaborators in real time.
 
-BioCloud addresses both gaps. By delegating all rendering computation to the client browser's WebGL pipeline, the platform eliminates server-side GPU requirements. Its architecture further introduces two features absent from existing lightweight viewers: (i) multi-file project support with a carousel-based navigation interface, enabling comparative structural analysis; and (ii) an atom-level annotation system that spatially anchors textual commentary to specific atomic coordinates.
+MolShare addresses both gaps. By delegating all rendering computation to the client browser's WebGL pipeline, the platform eliminates server-side GPU requirements. Its architecture further introduces two features absent from existing lightweight viewers: (i) multi-file project support with a carousel-based navigation interface, enabling comparative structural analysis; and (ii) an atom-level annotation system that spatially anchors textual commentary to specific atomic coordinates.
 
 ## 2 Implementation
 
 ### 2.1 System Architecture
 
-BioCloud is implemented as a full-stack web application using the Next.js 14 framework [8] with the App Router paradigm. The backend is provided by Supabase [9], an open-source Backend-as-a-Service platform wrapping PostgreSQL 15, which supplies authentication, object storage, real-time subscriptions, and a RESTful API (PostgREST) without requiring custom server code. The system architecture is illustrated in **Figure 1A**.
+MolShare is implemented as a full-stack web application using the Next.js 14 framework [8] with the App Router paradigm. The backend is provided by Supabase [9], an open-source Backend-as-a-Service platform wrapping PostgreSQL 15, which supplies authentication, object storage, real-time subscriptions, and a RESTful API (PostgREST) without requiring custom server code. The system architecture is illustrated in **Figure 1A**.
 
 The rendering stack employs a strict Client-Side Rendering (CSR) model. Molecular structure files are fetched directly from Supabase Object Storage to the browser, where 3Dmol.js [7]—loaded via dynamic `import()` to avoid server-side evaluation—performs all parsing, geometry generation, and WebGL rendering within the client's GPU context. This design has a critical operational consequence: the hosting server (Vercel, in the reference deployment) serves only static JavaScript bundles and proxies database queries. It performs zero rendering computation, enabling the platform to serve an arbitrary number of concurrent visualization sessions at fixed infrastructure cost.
 
@@ -52,7 +52,7 @@ All tables enforce Row Level Security (RLS) policies at the database level. For 
 
 ### 2.3 Multi-File Carousel Viewer
 
-Projects in BioCloud may contain multiple structure files (e.g., apo and holo conformations, homologous structures, or ligand-bound variants). Files are uploaded simultaneously through a multi-file input interface and stored as individual rows in `project_files` with sequential `sort_order` values. The `FileCarousel` component renders a horizontally scrollable strip of file selectors above the 3D viewport (**Figure 2A**). Selecting a file triggers re-initialization of the 3Dmol.js viewer with the corresponding file URL and format. The first uploaded file is additionally stored in the legacy `projects.file_url` column, ensuring backward compatibility with any external integrations referencing the canonical project URL.
+Projects in MolShare may contain multiple structure files (e.g., apo and holo conformations, homologous structures, or ligand-bound variants). Files are uploaded simultaneously through a multi-file input interface and stored as individual rows in `project_files` with sequential `sort_order` values. The `FileCarousel` component renders a horizontally scrollable strip of file selectors above the 3D viewport (**Figure 2A**). Selecting a file triggers re-initialization of the 3Dmol.js viewer with the corresponding file URL and format. The first uploaded file is additionally stored in the legacy `projects.file_url` column, ensuring backward compatibility with any external integrations referencing the canonical project URL.
 
 Owners may upload additional files or remove existing ones from the carousel without affecting other project metadata. Deletion cascades to associated annotations via the `ON DELETE CASCADE` constraint on `project_files.id`.
 
@@ -66,21 +66,21 @@ Annotations are displayed textually in a dedicated "Annotations" tab within the 
 
 ### 2.5 Security Model
 
-BioCloud implements a zero-trust data access model through PostgreSQL RLS, evaluated at the database engine level before any row is returned to the API. Authentication is handled by Supabase Auth (supporting email/password and OAuth providers), which issues JSON Web Tokens consumed by PostgREST for policy evaluation. Storage bucket policies further restrict file uploads to user-specific directory prefixes (`{user_id}/`), preventing cross-user write access to object storage. Projects default to public visibility but may be toggled to private by the owner via an in-line `PrivacyToggle` control.
+MolShare implements a zero-trust data access model through PostgreSQL RLS, evaluated at the database engine level before any row is returned to the API. Authentication is handled by Supabase Auth (supporting email/password and OAuth providers), which issues JSON Web Tokens consumed by PostgREST for policy evaluation. Storage bucket policies further restrict file uploads to user-specific directory prefixes (`{user_id}/`), preventing cross-user write access to object storage. Projects default to public visibility but may be toggled to private by the owner via an in-line `PrivacyToggle` control.
 
 ## 3 Usage and Results
 
-BioCloud is deployed at https://biocloud-ten.vercel.app. A typical workflow proceeds as follows: (i) the user authenticates and creates a new project by uploading one or more structure files (PDB, SDF, MOL2, XYZ, CIF, PQR, or CUBE format) with an optional CSV data attachment; (ii) the 3D viewer renders the first file, with the carousel providing access to additional structures; (iii) collaborators access the project via its public URL, add annotations to atoms of interest, and participate in threaded discussion; (iv) the project owner manages annotations, comments, and file attachments from a unified interface.
+MolShare is deployed at https://molshare-ten.vercel.app. A typical workflow proceeds as follows: (i) the user authenticates and creates a new project by uploading one or more structure files (PDB, SDF, MOL2, XYZ, CIF, PQR, or CUBE format) with an optional CSV data attachment; (ii) the 3D viewer renders the first file, with the carousel providing access to additional structures; (iii) collaborators access the project via its public URL, add annotations to atoms of interest, and participate in threaded discussion; (iv) the project owner manages annotations, comments, and file attachments from a unified interface.
 
 ### 3.1 Performance Benchmarks
 
-The client-side rendering model was evaluated empirically on a commodity laptop (AMD Ryzen, 12 logical cores, 8 GB RAM, AMD Radeon 740M integrated GPU, Windows 10, Chrome 145). Three PDB structures of increasing size were loaded through the same 3Dmol.js pipeline used by BioCloud. Rendering performance was measured using the `performance.now()` API; interactive frame rates were measured over 5-second continuous rotation intervals using `requestAnimationFrame` (**Table 1**).
+The client-side rendering model was evaluated empirically on a commodity laptop (AMD Ryzen, 12 logical cores, 8 GB RAM, AMD Radeon 740M integrated GPU, Windows 10, Chrome 145). Three PDB structures of increasing size were loaded through the same 3Dmol.js pipeline used by MolShare. Rendering performance was measured using the `performance.now()` API; interactive frame rates were measured over 5-second continuous rotation intervals using `requestAnimationFrame` (**Table 1**).
 
 All structures rendered in under 2 seconds on commodity hardware, with interactive frame rates exceeding 21 FPS across all tested sizes. These results confirm the feasibility of the zero-server-compute approach for typical pedagogical and research use cases. Re-render times (warm cache) ranged from 3.1 to 22.5 ms, indicating that interactive operations (rotation, zoom) do not introduce perceptible latency.
 
 ## 4 Discussion
 
-BioCloud occupies a specific niche in the molecular visualization ecosystem: it provides a zero-installation, zero-server-compute platform that combines structural viewing with spatially-anchored collaborative annotation. It is not intended to replace feature-rich desktop applications for publication-quality rendering or large-scale molecular dynamics trajectory analysis. Rather, it targets collaborative workflows in educational and small-team research contexts where infrastructure constraints preclude server-provisioned solutions.
+MolShare occupies a specific niche in the molecular visualization ecosystem: it provides a zero-installation, zero-server-compute platform that combines structural viewing with spatially-anchored collaborative annotation. It is not intended to replace feature-rich desktop applications for publication-quality rendering or large-scale molecular dynamics trajectory analysis. Rather, it targets collaborative workflows in educational and small-team research contexts where infrastructure constraints preclude server-provisioned solutions.
 
 The client-side rendering architecture introduces an inherent limitation: performance for very large structures (> 200,000 atoms) depends on the client device's GPU capabilities. Future work will investigate progressive loading strategies and level-of-detail rendering to mitigate this constraint. Additional planned features include annotation threading, structure-versus-structure alignment overlays, and integration with public repositories (PDB, UniProt) for direct structure retrieval.
 
@@ -120,7 +120,7 @@ The client-side rendering architecture introduces an inherent limitation: perfor
 
 ### Panel A: System Architecture
 
-![Figure 1A — BioCloud system architecture showing client-side rendering via 3Dmol.js/WebGL, Vercel edge network, and Supabase backend.](figures/mermaid-drawing.png)
+![Figure 1A — MolShare system architecture showing client-side rendering via 3Dmol.js/WebGL, Vercel edge network, and Supabase backend.](figures/mermaid-drawing.png)
 
 > **Key insight:** The Vercel server performs **zero rendering computation**. All molecular visualization is executed entirely on the user's GPU via WebGL. The server cost remains constant regardless of the number of concurrent visualization sessions.
 
@@ -136,7 +136,7 @@ The client-side rendering architecture introduces an inherent limitation: perfor
 
 ### Panel A: Dashboard with Multi-File Upload & Project Table
 
-![Figure 2A — BioCloud dashboard showing the multi-file upload form and project repository table with the Files count column.](figures/fig2a_dashboard.png)
+![Figure 2A — MolShare dashboard showing the multi-file upload form and project repository table with the Files count column.](figures/fig2a_dashboard.png)
 
 *The dashboard displays the multi-file upload interface (top) with separate drop zones for biological structures (multiple files allowed) and CSV data. The project table (bottom) includes a **Files** column showing per-project file counts alongside view counts, upload dates, and privacy status.*
 
@@ -162,7 +162,7 @@ The client-side rendering architecture introduces an inherent limitation: perfor
 
 **Test Hardware:** AMD Ryzen (12 cores) / AMD Radeon 740M integrated GPU / 8 GB RAM / Windows 10 / Chrome 145
 
-**Rendering mode:** cartoon + stick (same as BioCloud default for proteins). Measurements via `performance.now()` and `requestAnimationFrame` over 5-second rotation intervals.
+**Rendering mode:** cartoon + stick (same as MolShare default for proteins). Measurements via `performance.now()` and `requestAnimationFrame` over 5-second rotation intervals.
 
 | PDB ID | Structure                 | Atom Count | File Size (KB) | Render Time (ms) | Re-render / Warm (ms) | Interactive FPS |
 |--------|---------------------------|------------|----------------|-------------------|-----------------------|-----------------|

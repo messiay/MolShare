@@ -9,7 +9,7 @@ export default function AboutPage() {
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="max-w-3xl mx-auto text-center">
                         <h1 className="text-4xl sm:text-6xl font-extrabold text-gray-900 tracking-tight mb-6">
-                            Welcome to <span className="text-blue-600">BioCloud</span>
+                            Welcome to <span className="text-blue-600">MolShare</span>
                         </h1>
                         <p className="text-xl text-gray-600 mb-10 leading-relaxed">
                             The universal platform for visualizing, storing, and sharing your biological discoveries.
@@ -35,7 +35,7 @@ export default function AboutPage() {
             <section className="py-20">
                 <div className="container mx-auto px-6">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold text-gray-900 mb-4">Why BioCloud?</h2>
+                        <h2 className="text-3xl font-bold text-gray-900 mb-4">Why MolShare?</h2>
                         <p className="text-gray-600 max-w-2xl mx-auto">
                             Everything you need to manage your structural biology data in one place.
                         </p>
@@ -84,7 +84,7 @@ export default function AboutPage() {
                     <div className="text-center mb-16">
                         <h2 className="text-3xl font-bold mb-4">How It Works</h2>
                         <p className="text-gray-400 max-w-2xl mx-auto">
-                            Getting started with BioCloud is simple.
+                            Getting started with MolShare is simple.
                         </p>
                     </div>
 

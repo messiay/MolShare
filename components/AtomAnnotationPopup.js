@@ -179,7 +179,7 @@ export default function AtomAnnotationPopup({
             </div>
 
             {/* Input */}
-            {user ? (
+            {user && isOwner ? (
                 <div className="p-3 border-t border-gray-100 bg-gray-50/50">
                     <div className="flex items-end gap-2">
                         <textarea
@@ -206,7 +206,7 @@ export default function AtomAnnotationPopup({
                 </div>
             ) : (
                 <div className="p-3 border-t border-gray-100 text-center text-xs text-gray-400">
-                    Sign in to add annotations.
+                    {user ? 'Only the project owner can add annotations.' : 'Sign in to view annotations.'}
                 </div>
             )}
         </div>

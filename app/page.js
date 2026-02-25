@@ -33,7 +33,7 @@ export default function Home() {
           <div className="relative w-32 h-32 mx-auto mb-8">
             <Image
               src="/logo.png"
-              alt="BioCloud Logo"
+              alt="MolShare Logo"
               fill
               className="object-contain"
               priority
@@ -45,7 +45,7 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
             </span>
-            BioCloud V1.0 is Live
+            MolShare V1.0 is Live
           </div>
 
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900">
