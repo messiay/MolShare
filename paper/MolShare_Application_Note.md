@@ -6,7 +6,7 @@
 
 **Motivation:** Structural and computational biologists have been forced into sharing and collecting relevant data using public tools that use raw coordinate files over email or manual workflows, which detach data files. This can lead to version error corrupted data and key communication issues when forwarding the information of target residues for docking studies over text. Furthermore, existing desktop visualizations has complex command-line and file path installations and require high-end hardware that prevents students and researchers with low-end laptops from being  able to preview or even view files without downloading them.
 
-**Result:** Overcoming this, I propose MolShare- A browser based stand alone web application that needs no installation and no dedicated workspace for structural collaboration with their associated tabular data and allows end users to instantly share their work. MolShare supports submission of   multiple 3d structures along with their associated data and allows users to share their resulting 3d environment. The atom-wise annotation functionality builds on molecular structure annotations to allow users to append their remarks directly onto the 3D structure of the target residues. This eliminates the complex discussion completely. All rendering of the 3d states are done on the client side Device, letting the user interact, analyse and explore the molecular state with very low hardware requirements.
+**Results:** Overcoming this, I propose MolShare- A browser based stand alone web application that needs no installation and no dedicated workspace for structural collaboration with their associated tabular data and allows end users to instantly share their work. MolShare supports submission of multiple 3D structures along with their associated data and allows users to share their resulting 3D environment. The atom-wise annotation functionality builds on molecular structure annotations to allow users to append their remarks directly onto the 3D structure of the target residues. This eliminates the complex discussion completely. All rendering of the 3D states are done on the client side Device, letting the user interact, analyse and explore the molecular state with very low hardware requirements.
 
 **Availability and Implementation:** MolShare is an open-source, freely available under a permissive MIT license. The source code is accessible at https://github.com/messiay/MolShare, and the application is deployed for live use at https://molshare.arjanapartners.in.
 
@@ -16,7 +16,9 @@
 
 Looking at the orientation of lysine residue in relation to the target of an enzyme substrate docking, the principles of molecular physics remained completely different to the users. The Three-Dimensional visualization becomes essential when there is a need to comprehend structural specificity, localisation, binding sites and their topology, the mechanics of interaction between the molecules. The task of accurately describing the significant issue of structural biology in the absence of sensory observations is highly inefficient and poses an exponential risk of misunderstanding.
 
-In spite of the necessity of Three-Dimensional visualization, the collaborative structural analysis relies on highly disoriented workflows.  When A Researcher or a student needs to highlight a binding site, the most common way to capture it is to send a two-dimensional static screenshot or images and manually indicate drawing over it or by sending in a standalone .pdb or .pdbqt file via email. This fragmented approach removes the interactive context and the placement burden on the receiver's end to download and use the correct file, ensuring that they have the necessary desktop software installed and manually locate the exact region of interest.
+In spite of the necessity of Three-Dimensional visualization, the collaborative structural analysis relies on highly disoriented workflows. While powerful web-based viewers like Mol* [2] and NGL Viewer [3] provide excellent visualization, they primarily function as standalone viewers rather than native, multi-file collaborative workspaces. When A Researcher or a student needs to highlight a binding site, the most common way to capture it is to send a two-dimensional static screenshot or images and manually indicate drawing over it or by sending in a standalone .pdb or .pdbqt file via email. This fragmented approach removes the interactive context and the placement burden on the receiver's end to download and use the correct file, ensuring that they have the necessary desktop software installed and manually locate the exact region of interest.
+
+Mol* [2], NGL Viewer [3] and iCn3D from the NIH provide excellent 3D view capabilities on their own, but there was no central location for shared collaboration among all users of these tools. Users often exported very complex state scripts or session files for sharing a single point of view in these tools. None of these tools provide an intrinsic multi-file architecture for users to upload proprietary PDB's in a secure environment while also being able to upload CSV file's and anchor persistent spatial comments on the PDB's. MolShare addresses these concerns by providing a dedicated URL-routable cloud workspace for collaborative structural biology.
 
 MolShare addresses these structural bottlenecks by unifying interaction, Three-Dimensional visuals, metadata storage, and immediate and direct collaboration into a single shareable web link. Enabling spatially-Anchored, molecule-wise annotation, the platform ensures that all collaborators are viewing the exact same interactive three-dimensional state without requiring any local software installations or specialised computer hardware.
 
@@ -54,13 +56,13 @@ To overcome the "screenshot problem," BioCloud includes an interactive annotatio
 
 ## 4. Conclusion
 
-BioCloud democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation.
+BioCloud democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation. Future development will focus on integrating real-time collaborative cursors and expanding support for rendering molecular dynamics (MD) trajectories.
 
 ---
 
 ## Acknowledgements
 
-Artificial intelligence software (Google Gemini, Antigravity) was employed to help with codebase generation, formatting, and structural outlining of this manuscript, as per journal guidelines.
+Artificial intelligence coding assistants (Antigravity) and large language models (Google Gemini) were utilized to assist in codebase generation, formatting, and structural outlining of this manuscript, in accordance with journal policies.
 
 ---
 
@@ -137,6 +139,6 @@ Artificial intelligence software (Google Gemini, Antigravity) was employed to he
 
 [3] Rose, A. S., et al. (2018). NGL viewer: web-based molecular graphics for large complexes. *Bioinformatics*, **34**(21), 3755–3758.
 
-[4] Vercel Inc. (2024). Next.js: The React Framework for the Web. Retrieved from https://nextjs.org
+[4] Vercel Inc. (2024). Next.js: The React Framework for the Web. Version 14. Retrieved from https://nextjs.org
 
 [5] Supabase Inc. (2024). Supabase: The Open Source Firebase Alternative. Retrieved from https://supabase.com
