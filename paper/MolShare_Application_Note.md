@@ -90,13 +90,17 @@ Artificial intelligence software (Google Gemini, Antigravity) was employed to he
 
 ### Panel B: Atom Annotation Popup
 
-![Figure 2B — The AtomAnnotationPopup showing atom identity (LYS-1220, Chain A), spatial coordinates, and the text input for adding contextual annotations.](figures/fig2b_annotation_popup.png)
+![Figure 2B — The AtomAnnotationPopup showing atom identity (ALA-195, Chain A), spatial coordinates, and the text input for adding contextual annotations.](figures/fig2b_annotation_popup.png)
+
+*Clicking any atom in the 3D viewer triggers the AtomAnnotationPopup, which displays the atom's identity (residue, chain, serial number, Cartesian coordinates) and lists any existing annotations. Authenticated owners can add new spatially-anchored comments via the text input.*
 
 ---
 
 ### Panel C: Annotation Markers Rendered on the 3D Structure
 
-![Figure 2C — Annotation markers rendered on the 3D structure showing "ASP1150 binding site" as a purple label with translucent indigo sphere at the annotated atom position.](figures/fig2c_annotation_markers.png)
+![Figure 2C — Annotation markers rendered on the 3D structure showing "GLY304 traget" as a label with translucent sphere at the annotated atom position.](figures/fig2c_annotation_markers.png)
+
+*Saved annotations are rendered as translucent spheres with text labels displaying the full comment content directly on the 3D structure. Labels persist across rotations and zoom operations, providing persistent spatial context for collaborative review.*
 
 ---
 
@@ -108,11 +112,17 @@ Artificial intelligence software (Google Gemini, Antigravity) was employed to he
 
 | PDB ID | Structure                 | Atom Count | File Size (KB) | Render Time (ms) | Re-render / Warm (ms) | Interactive FPS |
 |--------|---------------------------|------------|----------------|-------------------|-----------------------|-----------------|
-| 4HHB   | Hemoglobin tetramer       | 4,779      | 463            | **460**           | 3.1                   | **21.9**        |
-| 1JFF   | Glutamate dehydrogenase   | 6,702      | 587            | **803**           | 5.0                   | **22.7**        |
-| 1AON   | GroEL chaperonin          | 58,870     | 4,857          | **1,964**         | 22.5                  | **21.3**        |
+| 4HHB   | Hemoglobin tetramer       | 4,779      | 463            | **494**           | 5.0                   | **23.6**        |
+| 1JFF   | Glutamate dehydrogenase   | 6,702      | 587            | **308**           | 3.9                   | **23.8**        |
+| 1AON   | GroEL chaperonin          | 58,870     | 4,857          | **~1,900**        | ~22                   | **23.2**        |
 
 **Notes:**
 - Render time measures client-side computation only (model parsing + geometry generation + first WebGL draw call), excluding network fetch time.
 - Interactive FPS measured during continuous Y-axis rotation via `requestAnimationFrame`.
 - All tests performed on integrated graphics — discrete GPU hardware is expected to yield higher frame rates.
+
+### Benchmark Proof
+
+![Benchmark results (Hardware info + 4HHB) — showing AMD Radeon 740M GPU, 12 cores, 8 GB RAM, and Hemoglobin render time of 494ms.](figures/fig_benchmark_top.png)
+
+![Benchmark results (1JFF + 1AON) — showing Glutamate DH render time of 308ms at 23.8 FPS, and GroEL FPS measurement of 23.2.](figures/fig_benchmark_results.png)
