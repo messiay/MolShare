@@ -56,11 +56,7 @@ To overcome the "screenshot problem," MolShare includes an interactive annotatio
 
 ## 4. Conclusion
 
-<<<<<<< HEAD
-BioCloud democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation. Future development will focus on integrating real-time collaborative cursors and expanding support for rendering molecular dynamics (MD) trajectories.
-=======
-MolShare democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation.
->>>>>>> 267051346557993cf76353c032c8f0d98a409c4f
+MolShare democratizes access to structural biology visualisation. By offloading the entire graphical processing task to the client browser and establishing a URL-based, spatially-annotated collaborative workspace, it overcomes the hardware and software obstacles that have traditionally prevented students and early-career researchers from engaging with structural biology visualisation. Future development will focus on integrating real-time collaborative cursors and expanding support for rendering molecular dynamics (MD) trajectories.
 
 ---
 
