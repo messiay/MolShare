@@ -69,32 +69,64 @@ export default function Dashboard() {
             // Fetch projects shared with the user (visited but not owned)
             const { data: viewedData, error: viewedError } = await supabase
                 .from('project_views')
-                .select('project_id, viewed_at, projects ( id, title, file_extension, owner_id, created_at, profiles:owner_id ( email, full_name ) )')
+                .select('project_id, viewed_at')
                 .eq('viewer_id', user.id)
                 .order('viewed_at', { ascending: false })
 
             if (viewedError) {
-                console.error('Error fetching shared projects:', viewedError)
-            } else if (viewedData) {
-                console.log('Viewed data:', viewedData)
-                // Deduplicate by project_id and exclude owned projects
+                console.error('Error fetching viewed projects:', viewedError)
+            } else if (viewedData && viewedData.length > 0) {
+                // Deduplicate and get unique project IDs (excluding own projects)
                 const seen = new Set()
-                const shared = viewedData
-                    .filter(v => v.projects && v.projects.owner_id !== user.id)
-                    .filter(v => {
-                        if (seen.has(v.project_id)) return false
-                        seen.add(v.project_id)
-                        return true
-                    })
-                    .map(v => ({
-                        id: v.projects.id,
-                        title: v.projects.title,
-                        file_extension: v.projects.file_extension,
-                        owner_email: v.projects.profiles?.email || 'Unknown',
-                        owner_name: v.projects.profiles?.full_name || null,
-                        last_viewed: v.viewed_at
+                const uniqueViews = viewedData.filter(v => {
+                    if (seen.has(v.project_id)) return false
+                    seen.add(v.project_id)
+                    return true
+                })
+
+                const projectIds = uniqueViews.map(v => v.project_id)
+
+                // Fetch those projects
+                const { data: sharedData, error: sharedError } = await supabase
+                    .from('projects')
+                    .select('id, title, file_extension, owner_id')
+                    .in('id', projectIds)
+
+                if (sharedError) {
+                    console.error('Error fetching shared project details:', sharedError)
+                } else if (sharedData) {
+                    // Filter out own projects
+                    const otherProjects = sharedData.filter(p => p.owner_id !== user.id)
+
+                    // Fetch owner profiles
+                    const ownerIds = [...new Set(otherProjects.map(p => p.owner_id))]
+                    let profileMap = {}
+
+                    if (ownerIds.length > 0) {
+                        const { data: profiles } = await supabase
+                            .from('profiles')
+                            .select('id, email, full_name')
+                            .in('id', ownerIds)
+
+                        if (profiles) {
+                            profiles.forEach(p => { profileMap[p.id] = p })
+                        }
+                    }
+
+                    // Build the shared projects list with view dates
+                    const viewDateMap = {}
+                    uniqueViews.forEach(v => { viewDateMap[v.project_id] = v.viewed_at })
+
+                    const shared = otherProjects.map(p => ({
+                        id: p.id,
+                        title: p.title,
+                        file_extension: p.file_extension,
+                        owner_email: profileMap[p.owner_id]?.email || 'Unknown',
+                        owner_name: profileMap[p.owner_id]?.full_name || null,
+                        last_viewed: viewDateMap[p.id]
                     }))
-                setSharedProjects(shared)
+                    setSharedProjects(shared)
+                }
             }
 
             setLoading(false)
