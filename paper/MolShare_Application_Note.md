@@ -8,7 +8,7 @@
 
 **Results:** Overcoming this, I propose MolShare- A browser based stand alone web application that needs no installation and no dedicated workspace for structural collaboration with their associated tabular data and allows end users to instantly share their work. MolShare supports submission of multiple 3D structures along with their associated data and allows users to share their resulting 3D environment. The atom-wise annotation functionality builds on molecular structure annotations to allow users to append their remarks directly onto the 3D structure of the target residues. This eliminates the complex discussion completely. All rendering of the 3D states are done on the client side Device, letting the user interact, analyse and explore the molecular state with very low hardware requirements.
 
-**Availability and Implementation:** MolShare is an open-source, freely available under a permissive MIT license. The source code is accessible at https://github.com/messiay/MolShare, and the application is deployed for live use at https://molshare.arjanapartners.in.
+**Availability and Implementation:** MolShare is an open-source, freely available under a permissive MIT license. The source code is accessible at https://github.com/messiay/MolShare, and the application is deployed for live use at https://molshare.arjanapartners.in. A demo account is available for reviewers — email: `demo@molshare.com`, password: `MolShare2025`.
 
 ---
 
