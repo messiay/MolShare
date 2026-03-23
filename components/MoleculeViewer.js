@@ -51,14 +51,21 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                 // Sanitize type
                 const ext = type.toLowerCase()
 
+                // Strip any END records to prevent 3Dmol.js from stopping early
+                // when a combined receptor+ligand PDB is loaded
+                const sanitizedData = data.replace(/^END\s*$/gm, '').trimEnd()
+
                 // Load model
-                viewer.addModel(data, ext)
+                viewer.addModel(sanitizedData, ext)
 
                 // Conditional Styling
                 const isProtein = ['pdb', 'cif', 'mmtf', 'pqr', 'ent'].includes(ext)
 
                 if (isProtein) {
-                    viewer.setStyle({}, { cartoon: { color: 'spectrum' }, stick: {} })
+                    // Style ATOM records (receptor backbone) as cartoon
+                    viewer.setStyle({ hetflag: false }, { cartoon: { color: 'spectrum' } })
+                    // Style HETATM records (ligands, small molecules) as sticks+spheres
+                    viewer.setStyle({ hetflag: true }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
                 } else {
                     viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } })
                 }
