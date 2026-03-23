@@ -62,10 +62,13 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                 const isProtein = ['pdb', 'cif', 'mmtf', 'pqr', 'ent'].includes(ext)
 
                 if (isProtein) {
-                    // Style ATOM records (receptor backbone) as cartoon
-                    viewer.setStyle({ hetflag: false }, { cartoon: { color: 'spectrum' } })
-                    // Style HETATM records (ligands, small molecules) as sticks+spheres
+                    // Style everything as cartoon first (receptor backbone)
+                    viewer.setStyle({}, { cartoon: { color: 'spectrum' } })
+                    // Override: HETATM ligands (standard PDB co-crystals)
                     viewer.setStyle({ hetflag: true }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
+                    // Override: PDBQT-sourced ligands written as ATOM records with resn UNL
+                    // (AutoDock Vina / WebVina output format)
+                    viewer.setStyle({ resn: 'UNL' }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
                 } else {
                     viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } })
                 }
