@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: molshare
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Supabase Studio (optional — gives you a UI for the DB)
+  supabase-studio:
+    image: supabase/studio:latest
+    ports:
+      - "3001:3000"
+    environment:
+      SUPABASE_URL: http://localhost:8000
+      STUDIO_PG_META_URL: http://localhost:8080
+    depends_on:
+      - db
+
+  # MolShare Next.js App
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/molshare
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

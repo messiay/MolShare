@@ -1,30 +1,38 @@
 # MolShare 🧬
 
-**MolShare** is a universal biological file SaaS platform designed to visualize, store, and share molecular structures effortlessly.
+**MolShare** is a universal biological file SaaS platform designed to visualize, store, collaborate, and share molecular structures effortlessly.
 
-![MolShare Hero](https://via.placeholder.com/1200x600?text=MolShare+Dashboard)
+---
 
 ## 🚀 Features
 
--   **Universal File Support**: Upload and visualize `.pdb`, `.sdf`, `.mol2`, `.xyz`, `.cif`, `.cube`, `.pqr` and more.
--   **Interactive 3D Viewer**: Powered by `3Dmol.js`, rendering complex molecular structures with high performance.
--   **Secure Cloud Storage**: All files are encrypted and stored using Supabase Storage.
--   **Notes & Collaboration**: Add research notes to your projects. Share public links with colleagues.
--   **Modern Dashboard**: clean, responsive UI built with Tailwind CSS.
+-   **Universal File Support**: Upload and visualize `.pdb`, `.sdf`, `.mol2`, `.xyz`, `.cif`, `.cube`, `.pqr`, `.csv` and AutoDock Vina docked complexes.
+-   **Interactive 3D Workstation**: Powered by `3Dmol.js`, featuring representations (`Cartoon`, `Stick`, `Sphere`, `Line`, `Cross`), color schemes (`By Chain`, `By Element`, `By Residue`, `Secondary Structure`), and real-time Molecular Surface with smooth opacity controls.
+-   **Data Versioning**: Seamless multi-file version management with interactive horizontal version timeline and instant lineage rollback.
+-   **3D Atom Annotations**: Click any 3D atom to add spatial research notes, comments, and discussion threads.
+-   **CSV Tabular Data Analysis**: Integrated spreadsheet preview for molecular datasets and docking affinity scores.
+-   **Secure Cloud Storage**: All files are encrypted and stored using Supabase Storage and PostgreSQL RLS.
+
+---
 
 ## 🛠️ Tech Stack
 
--   **Frontend**: Next.js 14+ (App Router)
--   **Styling**: Tailwind CSS, Lucide React
--   **Database & Auth**: Supabase (PostgreSQL, GoTrue)
--   **Visualization**: 3Dmol.js
+-   **Frontend**: Next.js 16 (App Router, Standalone Output)
+-   **Styling**: Tailwind CSS v4, Lucide React
+-   **Database & Auth**: Supabase (PostgreSQL, Row Level Security)
+-   **3D Molecular Visualization**: 3Dmol.js
+-   **Containerization**: Docker, Docker Compose
+-   **CI/CD**: GitHub Actions
+-   **Testing**: Jest, React Testing Library
 
-## 📦 Installation
+---
+
+## 📦 Local Development
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/yourusername/bioshare.git
-    cd bioshare
+    git clone https://github.com/messiay/MolShare.git
+    cd MolShare
     ```
 
 2.  **Install dependencies**:
@@ -32,10 +40,13 @@
     npm install
     ```
 
-3.  **Configure Environment**:
-    Create a `.env.local` file in the root directory:
+3.  **Configure Environment Variables**:
+    ```bash
+    cp .env.example .env.local
+    ```
+    Add your Supabase credentials in `.env.local`:
     ```env
-    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+    NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
     NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
     ```
 
@@ -43,29 +54,62 @@
     ```bash
     npm run dev
     ```
+    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## 🗄️ Database Setup
+5.  **Run Tests & Linting**:
+    ```bash
+    npm test          # Run Jest unit test suite
+    npm run lint      # Run ESLint code quality check
+    npm run build     # Verify Next.js production build
+    ```
 
-Run the following SQL in your Supabase SQL Editor to set up the required tables and policies:
+---
 
-```sql
--- Create projects table
-create table public.projects (
-  id uuid default gen_random_uuid() primary key,
-  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-  owner_id uuid references auth.users not null,
-  title text not null,
-  file_url text not null,
-  file_extension text not null,
-  is_public boolean default true,
-  notes text
-);
+## 🐳 Self-Hosting with Docker
 
--- Enable RLS
-alter table public.projects enable row level security;
+Prerequisites: [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
 
--- (Add Policies from schema.sql)
-```
+1.  **Clone the repository**:
+    ```bash
+    git clone https://github.com/messiay/MolShare.git
+    cd MolShare
+    ```
+
+2.  **Copy environment template**:
+    ```bash
+    cp .env.example .env.local
+    ```
+
+3.  **Start all services with Docker Compose**:
+    ```bash
+    docker compose up --build
+    ```
+
+4.  **Access the applications**:
+    - **MolShare Web Application**: [http://localhost:3000](http://localhost:3000)
+    - **Supabase Studio (DB Management)**: [http://localhost:3001](http://localhost:3001)
+    - **PostgreSQL Database**: `localhost:5432` (`postgres:postgres`)
+
+---
+
+## 🔄 CI/CD Pipeline
+
+MolShare uses **GitHub Actions** for continuous integration. Every push and pull request to `main` or `dev` triggers automated workflow jobs:
+
+-   **Lint Check**: Runs ESLint across the codebase for strict code quality.
+-   **Test Suite**: Executes automated Jest unit and integration tests.
+-   **Production Build Verification**: Validates full Next.js production compilation with standalone optimization.
+
+---
+
+## 🗄️ Database Schema & Versioning
+
+Run the SQL scripts in your Supabase SQL Editor:
+1. `schema.sql` — Core projects and user tables.
+2. `versioning.sql` — Multi-version lineage tracking.
+3. `interactive_features.sql` — 3D atom annotations and discussion threads.
+
+---
 
 ## 📄 License
 
