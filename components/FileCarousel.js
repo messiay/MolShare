@@ -101,11 +101,15 @@ export default function FileCarousel({ files, activeIndex, onSelect, isOwner, pr
 
     return (
         <div className="flex items-center gap-2 flex-1 max-w-full overflow-hidden">
-            {/* Scrollable File Cards */}
+            {/* Scrollable File Cards with Sleek Custom Scrollbar */}
             <div
                 ref={scrollRef}
-                className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 py-1"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                onWheel={(e) => {
+                    if (e.deltaY !== 0 && scrollRef.current) {
+                        scrollRef.current.scrollLeft += e.deltaY
+                    }
+                }}
+                className="flex items-center gap-2 overflow-x-auto custom-scrollbar flex-1 py-1 pb-2"
             >
                 {files.map((file, index) => (
                     <button
@@ -167,7 +171,7 @@ export default function FileCarousel({ files, activeIndex, onSelect, isOwner, pr
             </div>
 
             {/* Scroll Navigation Controls */}
-            {files.length > 3 && (
+            {files.length > 1 && (
                 <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-2">
                     <button
                         onClick={() => scroll('left')}

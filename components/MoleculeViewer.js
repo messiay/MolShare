@@ -351,47 +351,75 @@ export default function MoleculeViewer({
 
     return (
         <div className="w-full h-full flex flex-col bg-gray-100 overflow-hidden">
-            {/* Docked Top Version History Sub-Bar */}
+            {/* Docked Top Version History Sub-Bar with Horizontal Version Scrollbar */}
             {!error && (versions && versions.length > 0 || (isOwner && onUploadNewVersion)) && (
-                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-xs">
-                    {/* Left: Version History & Upload New Version */}
-                    <div className="flex items-center gap-2.5 flex-shrink-0">
+                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-xs overflow-hidden">
+                    {/* Left: Interactive Version Timeline Strip with horizontal scroll */}
+                    <div className="flex items-center gap-3 flex-1 overflow-hidden min-w-0">
+                        <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider flex-shrink-0">
+                            <History className="w-4 h-4 text-indigo-600" />
+                            <span>Versions:</span>
+                        </div>
+
+                        {/* Scrollable Version Pills Timeline */}
                         {versions && versions.length > 0 && (
-                            <div className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100/80 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-800 transition-colors">
-                                <History className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-                                <span className="font-semibold text-gray-600">Version:</span>
-                                <select
-                                    value={activeVersionId || ''}
-                                    onChange={(e) => onSelectVersion && onSelectVersion(e.target.value)}
-                                    className="bg-transparent text-gray-900 font-semibold text-sm outline-none cursor-pointer pr-1"
-                                >
-                                    {versions.map((v, idx) => (
-                                        <option key={v.id} value={v.id}>
-                                            Version {v.version_number || 1} {idx === versions.length - 1 && versions.length > 1 ? '(Latest)' : ''} — {v.created_at ? new Date(v.created_at).toLocaleDateString() : 'Initial'}
-                                        </option>
-                                    ))}
-                                </select>
+                            <div 
+                                onWheel={(e) => {
+                                    if (e.deltaY !== 0) {
+                                        e.currentTarget.scrollLeft += e.deltaY
+                                    }
+                                }}
+                                className="flex items-center gap-2 overflow-x-auto custom-scrollbar flex-1 py-1"
+                            >
+                                {versions.map((v, idx) => {
+                                    const isSelected = activeVersionId ? v.id === activeVersionId : idx === 0
+                                    const isLatest = idx === versions.length - 1 && versions.length > 1
+                                    return (
+                                        <button
+                                            key={v.id}
+                                            onClick={() => onSelectVersion && onSelectVersion(v.id)}
+                                            className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border flex-shrink-0 cursor-pointer ${
+                                                isSelected
+                                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs ring-2 ring-indigo-200'
+                                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            <span className="font-bold">v{v.version_number || 1}</span>
+                                            {isLatest && (
+                                                <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono uppercase font-bold ${
+                                                    isSelected ? 'bg-indigo-500 text-white' : 'bg-indigo-100 text-indigo-700'
+                                                }`}>
+                                                    Latest
+                                                </span>
+                                            )}
+                                            <span className={`text-[11px] font-medium ${isSelected ? 'text-indigo-100' : 'text-gray-400'}`}>
+                                                {v.created_at ? new Date(v.created_at).toLocaleDateString() : 'Initial'}
+                                            </span>
+                                        </button>
+                                    )
+                                })}
                             </div>
                         )}
-
-                        {isOwner && onUploadNewVersion && (
-                            <label className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer shadow-xs whitespace-nowrap">
-                                {uploadingVersion ? (
-                                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
-                                ) : (
-                                    <GitBranch className="w-4 h-4 text-indigo-600" />
-                                )}
-                                <span>{uploadingVersion ? 'Saving...' : 'Upload New Version'}</span>
-                                <input
-                                    type="file"
-                                    accept=".pdb,.sdf,.mol2,.xyz,.cif,.cube,.pqr"
-                                    className="hidden"
-                                    onChange={onUploadNewVersion}
-                                    disabled={uploadingVersion}
-                                />
-                            </label>
-                        )}
                     </div>
+
+                    {/* Right: Upload New Version Button */}
+                    {isOwner && onUploadNewVersion && (
+                        <label className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer shadow-xs whitespace-nowrap flex-shrink-0">
+                            {uploadingVersion ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+                            ) : (
+                                <GitBranch className="w-4 h-4 text-indigo-600" />
+                            )}
+                            <span>{uploadingVersion ? 'Saving...' : 'Upload New Version'}</span>
+                            <input
+                                type="file"
+                                accept=".pdb,.sdf,.mol2,.xyz,.cif,.cube,.pqr"
+                                className="hidden"
+                                onChange={onUploadNewVersion}
+                                disabled={uploadingVersion}
+                            />
+                        </label>
+                    )}
                 </div>
             )}
 
