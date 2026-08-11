@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Layers, Palette, Box } from 'lucide-react'
+import { Layers, Palette, Box, History, GitBranch, Loader2 } from 'lucide-react'
 
 const representations = ['cartoon', 'stick', 'sphere', 'line', 'cross']
 
@@ -12,7 +12,18 @@ const colorSchemes = {
     'White': 'white',
 }
 
-export default function MoleculeViewer({ url, type, annotations = [], onAtomClick }) {
+export default function MoleculeViewer({
+    url,
+    type,
+    annotations = [],
+    onAtomClick,
+    versions = [],
+    activeVersionId,
+    onSelectVersion,
+    onUploadNewVersion,
+    uploadingVersion,
+    isOwner
+}) {
     const containerRef = useRef(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -297,50 +308,88 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
     }
 
     return (
-        <div className="relative w-full h-full bg-gray-100 overflow-hidden">
-            {/* Interactive 3D Controls Toolbar */}
-            {!loading && !error && (
-                <div className="absolute top-4 right-4 z-10 flex flex-wrap items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-md border border-gray-200/80 text-xs transition-all">
-                    {/* 1. Representation Selector */}
-                    <div className="flex items-center gap-1.5 text-gray-700">
-                        <Layers className="w-3.5 h-3.5 text-indigo-600" />
-                        <select
-                            id="representation-selector"
-                            value={currentStyle}
-                            onChange={(e) => changeRepresentation(e.target.value)}
-                            className="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer font-medium transition-colors"
-                        >
-                            {representations.map(r => (
-                                <option key={r} value={r}>
-                                    {r.charAt(0).toUpperCase() + r.slice(1)}
-                                </option>
-                            ))}
-                        </select>
+        <div className="w-full h-full flex flex-col bg-gray-100 overflow-hidden">
+            {/* Docked Top Workstation Toolbar */}
+            {!error && (
+                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-3 py-1.5 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-2xs overflow-x-auto scrollbar-hide flex-nowrap">
+                    {/* Left: Version History & Upload New Version */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {versions && versions.length > 0 && (
+                            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
+                                <History className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                                <span className="font-semibold text-gray-600">Version:</span>
+                                <select
+                                    value={activeVersionId || ''}
+                                    onChange={(e) => onSelectVersion && onSelectVersion(e.target.value)}
+                                    className="bg-transparent text-gray-900 font-medium outline-none cursor-pointer pr-1"
+                                >
+                                    {versions.map((v, idx) => (
+                                        <option key={v.id} value={v.id}>
+                                            Version {v.version_number || 1} {idx === versions.length - 1 && versions.length > 1 ? '(Latest)' : ''} — {v.created_at ? new Date(v.created_at).toLocaleDateString() : 'Initial'}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        {isOwner && onUploadNewVersion && (
+                            <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-200 transition-all cursor-pointer shadow-2xs whitespace-nowrap">
+                                {uploadingVersion ? (
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                                ) : (
+                                    <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
+                                )}
+                                <span>{uploadingVersion ? 'Saving...' : 'Upload New Version'}</span>
+                                <input
+                                    type="file"
+                                    accept=".pdb,.sdf,.mol2,.xyz,.cif,.cube,.pqr"
+                                    className="hidden"
+                                    onChange={onUploadNewVersion}
+                                    disabled={uploadingVersion}
+                                />
+                            </label>
+                        )}
                     </div>
 
-                    {/* 2. Color Scheme Selector */}
-                    <div className="flex items-center gap-1.5 text-gray-700 border-l border-gray-200 pl-2">
-                        <Palette className="w-3.5 h-3.5 text-indigo-600" />
-                        <select
-                            id="colorscheme-selector"
-                            value={currentColor}
-                            onChange={(e) => changeColorScheme(e.target.value)}
-                            className="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer font-medium transition-colors"
-                        >
-                            {Object.entries(colorSchemes).map(([label, value]) => (
-                                <option key={value} value={value}>{label}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {/* Right: 3D Visualization Controls */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Style Selector */}
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
+                            <Layers className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                            <span className="text-gray-500 font-medium">Style:</span>
+                            <select
+                                value={currentStyle}
+                                onChange={(e) => changeRepresentation(e.target.value)}
+                                className="bg-transparent text-gray-900 font-medium outline-none cursor-pointer"
+                            >
+                                {representations.map(r => (
+                                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                    {/* 3. Surface Toggle & Opacity Slider */}
-                    <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
+                        {/* Color Scheme Selector */}
+                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
+                            <Palette className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                            <span className="text-gray-500 font-medium">Color:</span>
+                            <select
+                                value={currentColor}
+                                onChange={(e) => changeColorScheme(e.target.value)}
+                                className="bg-transparent text-gray-900 font-medium outline-none cursor-pointer"
+                            >
+                                {Object.entries(colorSchemes).map(([label, value]) => (
+                                    <option key={value} value={value}>{label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Surface Toggle Button */}
                         <button
                             id="surface-toggle-btn"
                             onClick={toggleSurface}
                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
                                 surfaceShowing
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm hover:bg-indigo-700'
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs hover:bg-indigo-700'
                                     : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
                             }`}
                         >
@@ -348,9 +397,10 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                             {surfaceShowing ? 'Hide Surface' : 'Show Surface'}
                         </button>
 
+                        {/* Opacity Slider */}
                         {surfaceShowing && (
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">Opacity:</span>
+                            <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 text-xs text-indigo-900 animate-in fade-in duration-150">
+                                <span className="font-medium">Opacity:</span>
                                 <input
                                     id="surface-opacity-slider"
                                     type="range"
@@ -359,10 +409,9 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                                     step="0.05"
                                     value={surfaceOpacity}
                                     onChange={(e) => changeSurfaceOpacity(e.target.value)}
-                                    className="w-16 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                    title={`Surface Opacity: ${Math.round(surfaceOpacity * 100)}%`}
+                                    className="w-16 h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <span className="text-[11px] font-mono font-medium text-gray-700 w-7 text-right">
+                                <span className="font-mono text-[11px] w-7 text-right">
                                     {Math.round(surfaceOpacity * 100)}%
                                 </span>
                             </div>
@@ -371,28 +420,40 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                 </div>
             )}
 
-            {loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-gray-100/90 z-10">
-                    <div className="flex flex-col items-center gap-2">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                        <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">Rendering...</p>
+            {/* 3D Canvas Area */}
+            <div className="flex-1 w-full h-full relative min-h-0">
+                {loading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100/90 z-10">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                            <p className="text-xs font-mono text-gray-500 uppercase tracking-widest">Rendering 3D Structure...</p>
+                        </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {error && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
-                    <div className="text-center p-6 max-w-md border border-red-200 bg-red-50 rounded">
-                        <h3 className="text-red-800 font-bold mb-2 font-mono uppercase text-xs">Error</h3>
-                        <p className="text-red-600 text-sm mb-4">{error}</p>
+                {error && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white z-20">
+                        <div className="text-center p-6 max-w-md border border-red-200 bg-red-50 rounded-xl">
+                            <h3 className="text-red-800 font-bold mb-2 font-mono uppercase text-xs">Error Loading Molecule</h3>
+                            <p className="text-red-600 text-sm mb-4">{error}</p>
+                        </div>
                     </div>
-                </div>
-            )}
-            <div
-                ref={containerRef}
-                className="w-full h-full"
-                style={{ cursor: onAtomClick ? 'crosshair' : 'default' }}
-            />
+                )}
+
+                <div
+                    ref={containerRef}
+                    className="w-full h-full"
+                    style={{ cursor: onAtomClick ? 'crosshair' : 'default' }}
+                />
+
+                {/* Subtle atom annotation hint watermark */}
+                {onAtomClick && (
+                    <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-white/85 backdrop-blur-sm border border-gray-200 text-[11px] text-gray-500 shadow-2xs pointer-events-none flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+                        Click any atom to add annotation
+                    </div>
+                )}
+            </div>
         </div>
     )
 }

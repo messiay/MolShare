@@ -180,10 +180,72 @@ export default function ViewPage() {
         fetchAnnotations()
     }
 
+    const [uploadingVersion, setUploadingVersion] = useState(false)
+
+    const handleUploadNewVersion = async (e) => {
+        const file = e.target.files?.[0]
+        if (!file || !activeFile || !user) return
+
+        setUploadingVersion(true)
+        try {
+            const timestamp = Date.now()
+            const ext = file.name.split('.').pop().toLowerCase()
+
+            // Calculate next version number
+            const currentMaxVersion = activeLineage.length > 0
+                ? Math.max(...activeLineage.map(f => f.version_number || 1))
+                : (activeFile.version_number || 1)
+            const nextVersion = currentMaxVersion + 1
+
+            const sanitizedName = `${timestamp}_v${nextVersion}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+            const filePath = `${user.id}/${sanitizedName}`
+
+            // 1. Upload to storage
+            const { error: uploadError } = await supabase.storage
+                .from('molecules')
+                .upload(filePath, file)
+
+            if (uploadError) throw uploadError
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('molecules')
+                .getPublicUrl(filePath)
+
+            // 2. Insert new version record into project_files
+            const rootId = activeFile.parent_version_id || activeFile.id
+            const { data: newFileRecord, error: dbError } = await supabase
+                .from('project_files')
+                .insert({
+                    project_id: project.id,
+                    owner_id: user.id,
+                    file_url: publicUrl,
+                    file_extension: ext,
+                    file_name: file.name,
+                    version_number: nextVersion,
+                    parent_version_id: rootId !== 'legacy' ? rootId : null,
+                    sort_order: activeFile.sort_order || 0
+                })
+                .select()
+                .single()
+
+            if (dbError) throw dbError
+
+            alert(`Uploaded ${file.name} as Version ${nextVersion}!`)
+            await handleFilesUpdated(newFileRecord?.id)
+        } catch (error) {
+            console.error(error)
+            alert('Error uploading new version: ' + error.message)
+        } finally {
+            setUploadingVersion(false)
+            e.target.value = ''
+        }
+    }
+
     if (loading) {
         return (
-            <div className="flex items-center justify-center h-screen bg-white">
-                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+            <div className="flex flex-col items-center justify-center h-screen bg-slate-50 gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                <p className="text-xs font-mono uppercase text-gray-500 tracking-wider">Loading project...</p>
             </div>
         )
     }
@@ -206,6 +268,15 @@ export default function ViewPage() {
     // Get active file
     const activeFile = projectFiles[activeFileIndex] || projectFiles[0]
 
+    // Find all versions belonging to the active file's lineage
+    const activeRootId = activeFile?.parent_version_id || activeFile?.id
+    const activeLineage = projectFiles.filter(f => 
+        (activeRootId && (f.id === activeRootId || f.parent_version_id === activeRootId)) ||
+        (activeFile?.id && f.parent_version_id === activeFile.id) ||
+        (activeFile?.parent_version_id && f.id === activeFile.parent_version_id) ||
+        f.file_name === activeFile?.file_name
+    ).sort((a, b) => (a.version_number || 1) - (b.version_number || 1))
+
     // Filter annotations for the active file
     const activeFileAnnotations = annotations.filter(ann => {
         if (activeFile?.id === 'legacy') return !ann.file_id
@@ -214,54 +285,66 @@ export default function ViewPage() {
 
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
-            {/* Left Panel: 3D Stage / CSV Viewer */}
-            <div className="flex-1 relative bg-gray-100 flex flex-col">
-                {/* File Carousel */}
-                {projectFiles.length > 0 && (
-                    <FileCarousel
-                        files={projectFiles}
-                        activeIndex={activeFileIndex}
-                        onSelect={setActiveFileIndex}
-                        isOwner={isOwner}
-                        projectId={project.id}
-                        userId={user?.id}
-                        onFilesUpdated={handleFilesUpdated}
-                    />
-                )}
-
-                <div className="absolute top-14 left-4 z-10 flex gap-2">
+            {/* Left Main Stage: Clean Top Nav & Canvas */}
+            <div className="flex-1 relative bg-slate-100 flex flex-col min-w-0 overflow-hidden">
+                {/* 1. Aligned Top Navigation Bar */}
+                <div className="h-13 bg-white border-b border-gray-200 px-3 flex items-center justify-between gap-2.5 flex-shrink-0 z-20 shadow-2xs">
+                    {/* Back link */}
                     <Link
                         href="/dashboard"
-                        className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-4 h-4" />
-                        Repository
+                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <span>Repository</span>
                     </Link>
 
-                    {/* View Toggles */}
-                    <div className="flex bg-white rounded shadow-sm border border-gray-200 p-1">
+                    <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
+
+                    {/* Horizontal File Carousel */}
+                    {projectFiles.length > 0 && (
+                        <FileCarousel
+                            files={projectFiles}
+                            activeIndex={activeFileIndex}
+                            onSelect={setActiveFileIndex}
+                            isOwner={isOwner}
+                            projectId={project.id}
+                            userId={user?.id}
+                            onFilesUpdated={handleFilesUpdated}
+                        />
+                    )}
+
+                    <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
+
+                    {/* View Switcher: 3D Structure vs Data Table */}
+                    <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg border border-gray-200 flex-shrink-0">
                         <button
                             onClick={() => setActiveView('3d')}
-                            className={`px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-all ${activeView === '3d' ? 'bg-indigo-100 text-indigo-700' : 'text-gray-500 hover:text-gray-900'
-                                }`}
+                            className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
+                                activeView === '3d'
+                                    ? 'bg-white text-indigo-700 shadow-2xs font-semibold'
+                                    : 'text-gray-600 hover:text-gray-900'
+                            }`}
                         >
-                            <Box className="w-4 h-4" />
-                            3D Structure
+                            <Box className="w-3.5 h-3.5 text-indigo-600" />
+                            <span>3D Structure</span>
                         </button>
 
                         {project.csv_file_url ? (
                             <button
                                 onClick={() => setActiveView('csv')}
-                                className={`px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-all ${activeView === 'csv' ? 'bg-green-100 text-green-700' : 'text-gray-500 hover:text-gray-900'
-                                    }`}
+                                className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
+                                    activeView === 'csv'
+                                        ? 'bg-white text-emerald-700 shadow-2xs font-semibold'
+                                        : 'text-gray-600 hover:text-gray-900'
+                                }`}
                             >
-                                <FileText className="w-4 h-4" />
-                                Data Table
+                                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Data Table</span>
                             </button>
                         ) : isOwner ? (
-                            <label className="px-3 py-1.5 rounded text-sm font-medium flex items-center gap-2 transition-all text-gray-500 hover:text-gray-900 hover:bg-gray-50 cursor-pointer">
-                                {uploadingCsv ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                                Add Data (CSV)
+                            <label className="px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 text-gray-500 hover:text-indigo-600 hover:bg-white cursor-pointer transition-all">
+                                {uploadingCsv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                                <span>Add CSV</span>
                                 <input
                                     type="file"
                                     accept=".csv"
@@ -274,7 +357,8 @@ export default function ViewPage() {
                     </div>
                 </div>
 
-                <div className="flex-1 w-full h-full relative">
+                {/* 2. Main Stage Content */}
+                <div className="flex-1 w-full h-full relative min-h-0">
                     {activeView === '3d' ? (
                         <div className="w-full h-full relative">
                             <MoleculeViewer
@@ -282,6 +366,15 @@ export default function ViewPage() {
                                 type={activeFile?.file_extension}
                                 annotations={activeFileAnnotations}
                                 onAtomClick={isOwner ? handleAtomClick : undefined}
+                                versions={activeLineage}
+                                activeVersionId={activeFile?.id}
+                                onSelectVersion={(selectedId) => {
+                                    const targetIdx = projectFiles.findIndex(f => f.id === selectedId)
+                                    if (targetIdx !== -1) setActiveFileIndex(targetIdx)
+                                }}
+                                onUploadNewVersion={handleUploadNewVersion}
+                                uploadingVersion={uploadingVersion}
+                                isOwner={isOwner}
                             />
 
                             {/* Atom Annotation Popup */}
@@ -299,98 +392,122 @@ export default function ViewPage() {
                             )}
                         </div>
                     ) : (
-                        <div className="w-full h-full p-4 pt-16">
+                        <div className="w-full h-full p-4 overflow-auto">
                             <CsvViewer url={project.csv_file_url} />
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Right Panel: Sidebar Information */}
-            <div className="w-[400px] flex flex-col border-l border-gray-200 bg-white">
-
-                {/* Header Metadata */}
-                <div className="p-8 border-b border-gray-50 space-y-6">
-                    <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
-                                {project.file_extension.toUpperCase()}
+            {/* Right Panel: Project Metadata & Interactions */}
+            <div className="w-[380px] flex flex-col border-l border-gray-200 bg-white flex-shrink-0">
+                {/* Header Metadata Card */}
+                <div className="p-5 border-b border-gray-200 bg-white space-y-4">
+                    {/* Top Row: Format Badge & Action Buttons */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-indigo-50 text-indigo-700 border border-indigo-100 uppercase">
+                                {project.file_extension}
                             </span>
-                            <div className="flex flex-col gap-2 mt-4">
-                                <div className="flex gap-2">
-                                    <button onClick={toggleShareLink} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-colors text-sm font-medium ${showShareLink ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-700'}`}>
-                                        <Share2 className="w-4 h-4" />
-                                        Share
-                                    </button>
-                                    <a href={activeFile?.file_url || project.file_url} download className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg transition-colors text-sm font-medium">
-                                        <Download className="w-4 h-4" />
-                                        Structure
-                                    </a>
-                                </div>
-                                {showShareLink && (
-                                    <div className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg animate-in fade-in slide-in-from-top-1 duration-200">
-                                        <Link2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                        <input
-                                            readOnly
-                                            value={typeof window !== 'undefined' ? window.location.href : ''}
-                                            className="flex-1 text-xs bg-transparent border-0 text-gray-600 focus:ring-0 font-mono truncate p-0"
-                                            onClick={(e) => e.target.select()}
-                                        />
-                                        <button
-                                            onClick={handleCopyLink}
-                                            className={`flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium transition-all flex-shrink-0 ${copied
-                                                ? 'bg-green-100 text-green-700'
-                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                                                }`}
-                                        >
-                                            {copied ? <><Check className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
-                                        </button>
-                                    </div>
-                                )}
-                                {project.csv_file_url && (
-                                    <a href={project.csv_file_url} download className="flex items-center justify-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors text-sm font-medium">
-                                        <FileText className="w-4 h-4" />
-                                        Download CSV Data
-                                    </a>
-                                )}
-                                {isOwner && project.csv_file_url && (
-                                    <label className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg transition-colors text-sm font-medium cursor-pointer">
-                                        {uploadingCsv ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-                                        Update CSV Data
-                                        <input
-                                            type="file"
-                                            accept=".csv"
-                                            className="hidden"
-                                            onChange={handleCsvUpload}
-                                            disabled={uploadingCsv}
-                                        />
-                                    </label>
-                                )}
+                            {project.is_public ? (
+                                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    Public
+                                </span>
+                            ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 border border-gray-200">
+                                    Private
+                                </span>
+                            )}
+                        </div>
+
+                        {/* Action Buttons: Share & Download */}
+                        <div className="flex items-center gap-1.5">
+                            <button
+                                onClick={toggleShareLink}
+                                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                                    showShareLink
+                                        ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200'
+                                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}
+                                title="Share project link"
+                            >
+                                <Share2 className="w-3.5 h-3.5" />
+                                <span>Share</span>
+                            </button>
+
+                            <a
+                                href={activeFile?.file_url || project.file_url}
+                                download
+                                className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-medium transition-all"
+                                title="Download 3D Structure file"
+                            >
+                                <Download className="w-3.5 h-3.5" />
+                                <span>Structure</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Share Link Accordion */}
+                    {showShareLink && (
+                        <div className="p-2.5 bg-gray-50 border border-indigo-100 rounded-xl space-y-2 animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="flex items-center justify-between text-[11px] text-gray-500 font-medium">
+                                <span className="flex items-center gap-1">
+                                    <Link2 className="w-3 h-3 text-indigo-600" />
+                                    Shareable Link
+                                </span>
+                                <span>Anyone with link can view</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <input
+                                    readOnly
+                                    value={typeof window !== 'undefined' ? window.location.href : ''}
+                                    className="flex-1 text-xs bg-white border border-gray-200 rounded-md px-2 py-1 text-gray-600 font-mono truncate outline-none focus:border-indigo-500"
+                                    onClick={(e) => e.target.select()}
+                                />
+                                <button
+                                    onClick={handleCopyLink}
+                                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-all flex-shrink-0 ${
+                                        copied
+                                            ? 'bg-emerald-600 text-white'
+                                            : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-2xs'
+                                    }`}
+                                >
+                                    {copied ? <><Check className="w-3 h-3" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+                                </button>
                             </div>
                         </div>
-                        <h1 className="text-3xl font-bold text-gray-900 break-words tracking-tight leading-tight">{project.title}</h1>
+                    )}
 
-                        {/* Shared By Badge */}
-                        {ownerProfile && (
-                            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs text-white font-bold">
-                                    {ownerProfile.email?.[0].toUpperCase() || 'U'}
+                    {/* Title */}
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900 break-words tracking-tight leading-snug">
+                            {project.title}
+                        </h1>
+
+                        {/* Owner & File Count Metadata */}
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-gray-500">
+                            {ownerProfile && (
+                                <div className="flex items-center gap-1.5">
+                                    <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-[10px] text-white font-bold">
+                                        {ownerProfile.email?.[0].toUpperCase() || 'U'}
+                                    </div>
+                                    <span className="truncate max-w-[170px] text-gray-700 font-medium">
+                                        {ownerProfile.email}
+                                    </span>
                                 </div>
-                                <span>Shared by <span className="text-gray-900 font-medium">{ownerProfile.email}</span></span>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Multi-file info */}
-                        {projectFiles.length > 1 && (
-                            <div className="mt-3 text-xs text-gray-400 flex items-center gap-1">
-                                <Database className="w-3 h-3" />
-                                {projectFiles.length} structure files in this project
-                            </div>
-                        )}
+                            {projectFiles.length > 1 && (
+                                <div className="flex items-center gap-1 text-gray-400 font-medium">
+                                    <Database className="w-3 h-3" />
+                                    <span>{projectFiles.length} structures</span>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-
+                {/* Interactive Panels: Notes, Comments & Annotations */}
                 <div className="flex-1 overflow-hidden">
                     <InteractionPanel
                         projectId={project.id}
