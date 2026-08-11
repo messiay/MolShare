@@ -1,5 +1,16 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
+import { Layers, Palette, Box } from 'lucide-react'
+
+const representations = ['cartoon', 'stick', 'sphere', 'line', 'cross']
+
+const colorSchemes = {
+    'By Chain': 'chain',
+    'By Element': 'element',
+    'By Residue': 'residueindex',
+    'By Secondary Structure': 'ssPyMOL',
+    'White': 'white',
+}
 
 export default function MoleculeViewer({ url, type, annotations = [], onAtomClick }) {
     const containerRef = useRef(null)
@@ -7,6 +18,78 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
     const [error, setError] = useState(null)
     const viewerRef = useRef(null)
     const $3DmolRef = useRef(null)
+    const surfaceIdRef = useRef(null)
+
+    // Interactive visualization state
+    const [currentStyle, setCurrentStyle] = useState('cartoon')
+    const [currentColor, setCurrentColor] = useState('chain')
+    const [surfaceShowing, setSurfaceShowing] = useState(false)
+
+    const styleRef = useRef(currentStyle)
+    const colorRef = useRef(currentColor)
+    styleRef.current = currentStyle
+    colorRef.current = currentColor
+
+    // Combined style + color applicator
+    const applyStyle = useCallback((style, color, viewerInstance = null) => {
+        const viewer = viewerInstance || viewerRef.current
+        if (!viewer) return
+
+        const colorProp = color === 'white' ? { color: 'white' } : { colorscheme: color }
+        const styleObj = {}
+
+        if (style === 'stick') {
+            styleObj.stick = { radius: 0.15, ...colorProp }
+        } else if (style === 'sphere') {
+            styleObj.sphere = { scale: 0.3, ...colorProp }
+        } else if (style === 'cartoon') {
+            styleObj.cartoon = { ...colorProp }
+        } else if (style === 'line') {
+            styleObj.line = { ...colorProp }
+        } else if (style === 'cross') {
+            styleObj.cross = { ...colorProp }
+        } else {
+            styleObj[style] = { ...colorProp }
+        }
+
+        // Apply primary style across whole molecule
+        viewer.setStyle({}, styleObj)
+
+        // Maintain ligand highlighting for HETATM / UNL
+        viewer.setStyle({ hetflag: true }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
+        viewer.setStyle({ resn: 'UNL' }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
+
+        viewer.render()
+    }, [])
+
+    const changeRepresentation = (style) => {
+        setCurrentStyle(style)
+        applyStyle(style, currentColor)
+    }
+
+    const changeColorScheme = (scheme) => {
+        setCurrentColor(scheme)
+        applyStyle(currentStyle, scheme)
+    }
+
+    const toggleSurface = () => {
+        const viewer = viewerRef.current
+        const $3Dmol = $3DmolRef.current
+        if (!viewer || !$3Dmol) return
+
+        if (surfaceShowing) {
+            viewer.removeAllSurfaces()
+            surfaceIdRef.current = null
+            setSurfaceShowing(false)
+        } else {
+            surfaceIdRef.current = viewer.addSurface(
+                $3Dmol.SurfaceType.VDW,
+                { opacity: 0.7, colorscheme: 'whiteCarbon' }
+            )
+            setSurfaceShowing(true)
+        }
+        viewer.render()
+    }
 
     useEffect(() => {
         let isMounted = true
@@ -15,6 +98,8 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
 
         setLoading(true)
         setError(null)
+        setSurfaceShowing(false)
+        surfaceIdRef.current = null
 
         // Clear previous viewer
         containerRef.current.innerHTML = ''
@@ -49,7 +134,7 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                 }
 
                 // Sanitize type
-                const ext = type.toLowerCase()
+                const ext = type ? type.toLowerCase() : 'pdb'
 
                 // Strip any END records to prevent 3Dmol.js from stopping early
                 // when a combined receptor+ligand PDB is loaded
@@ -58,20 +143,14 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                 // Load model
                 viewer.addModel(sanitizedData, ext)
 
-                // Conditional Styling
+                // Conditional Styling default
                 const isProtein = ['pdb', 'cif', 'mmtf', 'pqr', 'ent'].includes(ext)
-
-                if (isProtein) {
-                    // Style everything as cartoon first (receptor backbone)
-                    viewer.setStyle({}, { cartoon: { color: 'spectrum' } })
-                    // Override: HETATM ligands (standard PDB co-crystals)
-                    viewer.setStyle({ hetflag: true }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
-                    // Override: PDBQT-sourced ligands written as ATOM records with resn UNL
-                    // (AutoDock Vina / WebVina output format)
-                    viewer.setStyle({ resn: 'UNL' }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
-                } else {
-                    viewer.setStyle({}, { stick: { radius: 0.15 }, sphere: { scale: 0.25 } })
+                const initialStyle = isProtein ? styleRef.current : 'stick'
+                if (!isProtein && styleRef.current === 'cartoon') {
+                    setCurrentStyle('stick')
                 }
+
+                applyStyle(initialStyle, colorRef.current, viewer)
 
                 // Set up atom click handler
                 if (onAtomClick) {
@@ -116,7 +195,7 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
         return () => {
             isMounted = false
         }
-    }, [url, type])
+    }, [url, type, applyStyle])
 
     // Re-render markers when annotations change (without reloading the whole model)
     useEffect(() => {
@@ -180,6 +259,59 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
 
     return (
         <div className="relative w-full h-full bg-gray-100 overflow-hidden">
+            {/* Interactive 3D Controls Toolbar */}
+            {!loading && !error && (
+                <div className="absolute top-4 right-4 z-10 flex flex-wrap items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-2 rounded-xl shadow-md border border-gray-200/80 text-xs transition-all">
+                    {/* 1. Representation Selector */}
+                    <div className="flex items-center gap-1.5 text-gray-700">
+                        <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                        <select
+                            id="representation-selector"
+                            value={currentStyle}
+                            onChange={(e) => changeRepresentation(e.target.value)}
+                            className="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer font-medium transition-colors"
+                        >
+                            {representations.map(r => (
+                                <option key={r} value={r}>
+                                    {r.charAt(0).toUpperCase() + r.slice(1)}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* 2. Color Scheme Selector */}
+                    <div className="flex items-center gap-1.5 text-gray-700 border-l border-gray-200 pl-2">
+                        <Palette className="w-3.5 h-3.5 text-indigo-600" />
+                        <select
+                            id="colorscheme-selector"
+                            value={currentColor}
+                            onChange={(e) => changeColorScheme(e.target.value)}
+                            className="bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs rounded-lg px-2 py-1 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none cursor-pointer font-medium transition-colors"
+                        >
+                            {Object.entries(colorSchemes).map(([label, value]) => (
+                                <option key={value} value={value}>{label}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* 3. Surface Toggle */}
+                    <div className="border-l border-gray-200 pl-2">
+                        <button
+                            id="surface-toggle-btn"
+                            onClick={toggleSurface}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                                surfaceShowing
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm hover:bg-indigo-700'
+                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
+                            }`}
+                        >
+                            <Box className="w-3.5 h-3.5" />
+                            {surfaceShowing ? 'Hide Surface' : 'Show Surface'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100/90 z-10">
                     <div className="flex flex-col items-center gap-2">
@@ -205,3 +337,4 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
         </div>
     )
 }
+
