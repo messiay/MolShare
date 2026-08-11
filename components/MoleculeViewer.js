@@ -66,12 +66,17 @@ export default function MoleculeViewer({
             styleObj[style] = { ...colorProp }
         }
 
-        // Apply primary style across whole molecule
+        // 1. Apply primary representation across the structure
         viewer.setStyle({}, styleObj)
 
-        // Maintain ligand highlighting for HETATM / UNL
-        viewer.setStyle({ hetflag: true }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
-        viewer.setStyle({ resn: 'UNL' }, { stick: { radius: 0.15, colorscheme: 'greenCarbon' }, sphere: { scale: 0.25 } })
+        // 2. Render all ligands, cofactors, and heteroatoms in prominent ball-and-stick
+        const ligandResidues = ['UNL', 'LIG', 'MOL', 'UNK', 'DRG', 'INH', 'L1', 'L2', 'L3', 'NAG', 'HEM', 'ATP', 'GTP', 'NAD', 'FAD', 'SAM', 'SAH']
+        
+        viewer.setStyle({ hetflag: true }, { stick: { radius: 0.22, colorscheme: 'greenCarbon' }, sphere: { scale: 0.28 } })
+        
+        ligandResidues.forEach(res => {
+            viewer.setStyle({ resn: res }, { stick: { radius: 0.22, colorscheme: 'greenCarbon' }, sphere: { scale: 0.28 } })
+        })
 
         viewer.render()
     }, [])
@@ -186,9 +191,46 @@ export default function MoleculeViewer({
                 // Sanitize type
                 const ext = type ? type.toLowerCase() : 'pdb'
 
-                // Strip any END records to prevent 3Dmol.js from stopping early
-                // when a combined receptor+ligand PDB is loaded
-                const sanitizedData = data.replace(/^END\s*$/gm, '').trimEnd()
+                // Robust sanitizer for docking complexes (AutoDock, Vina, WebVina, SwissDock, LeDock)
+                let sanitizedData = data
+                if (['pdb', 'pdbqt', 'ent'].includes(ext)) {
+                    const standardAminoAcids = new Set([
+                        'ALA', 'ARG', 'ASN', 'ASP', 'CYS', 'GLN', 'GLU', 'GLY', 'HIS', 'ILE',
+                        'LEU', 'LYS', 'MET', 'PHE', 'PRO', 'SER', 'THR', 'TRP', 'TYR', 'VAL',
+                        'MSE', 'SEC', 'PYL', 'HOH', 'WAT', 'DA', 'DT', 'DC', 'DG', 'A', 'U', 'C', 'G'
+                    ])
+                    const ignoredPrefixes = [
+                        'MODEL', 'ENDMDL', 'ENDROOT', 'ROOT', 'BRANCH', 'ENDBRANCH', 
+                        'TORSDOF', 'USER', 'REMARK'
+                    ]
+
+                    const lines = data.split(/\r?\n/)
+                    const cleanedLines = []
+
+                    for (let line of lines) {
+                        const trimmed = line.trim()
+                        if (!trimmed) continue
+
+                        const recordType = line.substring(0, 6).trim().toUpperCase()
+
+                        // Skip Vina/PDBQT metadata keywords & END delimiters between receptor and ligand
+                        if (ignoredPrefixes.some(p => trimmed.startsWith(p)) || recordType === 'END') {
+                            continue
+                        }
+
+                        if (recordType === 'ATOM' || recordType === 'HETATM') {
+                            const resn = line.length >= 20 ? line.substring(17, 20).trim().toUpperCase() : ''
+                            let updatedLine = line
+                            if (!standardAminoAcids.has(resn) && recordType === 'ATOM') {
+                                updatedLine = 'HETATM' + line.substring(6)
+                            }
+                            cleanedLines.push(updatedLine)
+                        } else if (['CONECT', 'TER', 'MASTER', 'HEADER', 'COMPND'].includes(recordType)) {
+                            cleanedLines.push(line)
+                        }
+                    }
+                    sanitizedData = cleanedLines.join('\n')
+                }
 
                 // Load model
                 viewer.addModel(sanitizedData, ext)
