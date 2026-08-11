@@ -24,11 +24,14 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
     const [currentStyle, setCurrentStyle] = useState('cartoon')
     const [currentColor, setCurrentColor] = useState('chain')
     const [surfaceShowing, setSurfaceShowing] = useState(false)
+    const [surfaceOpacity, setSurfaceOpacity] = useState(0.7)
 
     const styleRef = useRef(currentStyle)
     const colorRef = useRef(currentColor)
+    const surfaceOpacityRef = useRef(surfaceOpacity)
     styleRef.current = currentStyle
     colorRef.current = currentColor
+    surfaceOpacityRef.current = surfaceOpacity
 
     // Combined style + color applicator
     const applyStyle = useCallback((style, color, viewerInstance = null) => {
@@ -84,10 +87,25 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
         } else {
             surfaceIdRef.current = viewer.addSurface(
                 $3Dmol.SurfaceType.VDW,
-                { opacity: 0.7, colorscheme: 'whiteCarbon' }
+                { opacity: surfaceOpacity, colorscheme: 'whiteCarbon' }
             )
             setSurfaceShowing(true)
         }
+        viewer.render()
+    }
+
+    const changeSurfaceOpacity = (newOpacity) => {
+        const val = Math.max(0.1, Math.min(1.0, parseFloat(newOpacity) || 0.7))
+        setSurfaceOpacity(val)
+        const viewer = viewerRef.current
+        const $3Dmol = $3DmolRef.current
+        if (!viewer || !$3Dmol || !surfaceShowing) return
+
+        viewer.removeAllSurfaces()
+        surfaceIdRef.current = viewer.addSurface(
+            $3Dmol.SurfaceType.VDW,
+            { opacity: val, colorscheme: 'whiteCarbon' }
+        )
         viewer.render()
     }
 
@@ -294,8 +312,8 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                         </select>
                     </div>
 
-                    {/* 3. Surface Toggle */}
-                    <div className="border-l border-gray-200 pl-2">
+                    {/* 3. Surface Toggle & Opacity Slider */}
+                    <div className="flex items-center gap-2 border-l border-gray-200 pl-2">
                         <button
                             id="surface-toggle-btn"
                             onClick={toggleSurface}
@@ -308,6 +326,26 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
                             <Box className="w-3.5 h-3.5" />
                             {surfaceShowing ? 'Hide Surface' : 'Show Surface'}
                         </button>
+
+                        {surfaceShowing && (
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] text-gray-500 font-medium whitespace-nowrap">Opacity:</span>
+                                <input
+                                    id="surface-opacity-slider"
+                                    type="range"
+                                    min="0.1"
+                                    max="1.0"
+                                    step="0.05"
+                                    value={surfaceOpacity}
+                                    onChange={(e) => changeSurfaceOpacity(e.target.value)}
+                                    className="w-16 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    title={`Surface Opacity: ${Math.round(surfaceOpacity * 100)}%`}
+                                />
+                                <span className="text-[11px] font-mono font-medium text-gray-700 w-7 text-right">
+                                    {Math.round(surfaceOpacity * 100)}%
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
