@@ -10,6 +10,8 @@ create table public.project_files (
   file_url text not null,
   file_extension text not null,
   file_name text not null,
+  version_number integer default 1,
+  parent_version_id uuid references public.project_files(id) on delete set null,
   sort_order integer default 0,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );

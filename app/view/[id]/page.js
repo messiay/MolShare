@@ -74,16 +74,23 @@ export default function ViewPage() {
         setLoading(false)
     }
 
-    async function fetchProjectFiles(projectData) {
+    async function fetchProjectFiles(projectData, targetFileId = null) {
         const proj = projectData || project
         const { data: files } = await supabase
             .from('project_files')
             .select('*')
             .eq('project_id', id)
             .order('sort_order', { ascending: true })
+            .order('version_number', { ascending: true })
 
         if (files && files.length > 0) {
             setProjectFiles(files)
+            if (targetFileId) {
+                const targetIndex = files.findIndex(f => f.id === targetFileId)
+                if (targetIndex !== -1) {
+                    setActiveFileIndex(targetIndex)
+                }
+            }
         } else if (proj) {
             // Legacy fallback: use the single file_url from the project
             setProjectFiles([{
@@ -91,6 +98,7 @@ export default function ViewPage() {
                 file_url: proj.file_url,
                 file_extension: proj.file_extension,
                 file_name: proj.title,
+                version_number: 1,
                 sort_order: 0
             }])
         }
@@ -164,8 +172,8 @@ export default function ViewPage() {
         setClickedAtom(null)
     }
 
-    const handleFilesUpdated = () => {
-        fetchProjectFiles(project)
+    const handleFilesUpdated = async (targetFileId = null) => {
+        await fetchProjectFiles(project, targetFileId)
     }
 
     const handleAnnotationSaved = () => {

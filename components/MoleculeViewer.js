@@ -85,10 +85,17 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
             surfaceIdRef.current = null
             setSurfaceShowing(false)
         } else {
-            surfaceIdRef.current = viewer.addSurface(
+            const res = viewer.addSurface(
                 $3Dmol.SurfaceType.VDW,
                 { opacity: surfaceOpacity, colorscheme: 'whiteCarbon' }
             )
+            surfaceIdRef.current = res?.surfid !== undefined ? res.surfid : res
+            if (res && typeof res.then === 'function') {
+                res.then((id) => {
+                    surfaceIdRef.current = id
+                    viewer.render()
+                })
+            }
             setSurfaceShowing(true)
         }
         viewer.render()
@@ -101,12 +108,26 @@ export default function MoleculeViewer({ url, type, annotations = [], onAtomClic
         const $3Dmol = $3DmolRef.current
         if (!viewer || !$3Dmol || !surfaceShowing) return
 
-        viewer.removeAllSurfaces()
-        surfaceIdRef.current = viewer.addSurface(
-            $3Dmol.SurfaceType.VDW,
-            { opacity: val, colorscheme: 'whiteCarbon' }
-        )
-        viewer.render()
+        const surfId = surfaceIdRef.current
+        if (surfId !== null && viewer.surfaces && viewer.surfaces[surfId]) {
+            // Fast in-place material style update (0ms, no geometry recalculation)
+            viewer.setSurfaceMaterialStyle(surfId, { opacity: val, colorscheme: 'whiteCarbon' })
+            viewer.render()
+        } else {
+            viewer.removeAllSurfaces()
+            const res = viewer.addSurface(
+                $3Dmol.SurfaceType.VDW,
+                { opacity: val, colorscheme: 'whiteCarbon' }
+            )
+            surfaceIdRef.current = res?.surfid !== undefined ? res.surfid : res
+            if (res && typeof res.then === 'function') {
+                res.then((id) => {
+                    surfaceIdRef.current = id
+                    viewer.render()
+                })
+            }
+            viewer.render()
+        }
     }
 
     useEffect(() => {

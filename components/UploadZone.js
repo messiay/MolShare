@@ -127,6 +127,8 @@ export default function UploadZone() {
                 file_url: f.url,
                 file_extension: f.extension,
                 file_name: f.name,
+                version_number: 1,
+                parent_version_id: null,
                 sort_order: f.sort_order
             }))
 
