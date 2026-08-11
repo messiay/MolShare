@@ -309,9 +309,9 @@ export default function MoleculeViewer({
 
     return (
         <div className="w-full h-full flex flex-col bg-gray-100 overflow-hidden">
-            {/* Docked Top Workstation Toolbar */}
-            {!error && (
-                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-2.5 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-xs overflow-x-auto scrollbar-hide flex-nowrap">
+            {/* Docked Top Version History Sub-Bar */}
+            {!error && (versions && versions.length > 0 || (isOwner && onUploadNewVersion)) && (
+                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-2 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-xs">
                     {/* Left: Version History & Upload New Version */}
                     <div className="flex items-center gap-2.5 flex-shrink-0">
                         {versions && versions.length > 0 && (
@@ -350,17 +350,22 @@ export default function MoleculeViewer({
                             </label>
                         )}
                     </div>
+                </div>
+            )}
 
-                    {/* Right: 3D Visualization Controls */}
-                    <div className="flex items-center gap-2.5 flex-shrink-0">
+            {/* 3D Canvas Area with Floating 3D Control Widget */}
+            <div className="flex-1 w-full h-full relative min-h-0">
+                {/* Floating 3D Visualization Controls in Top-Right Corner */}
+                {!loading && !error && (
+                    <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-md border border-gray-200/90 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
                         {/* Style Selector */}
-                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-800">
-                            <Layers className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                        <div className="flex items-center gap-1.5 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 rounded-xl px-2.5 py-1.5 transition-colors">
+                            <Layers className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
                             <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Style:</span>
                             <select
                                 value={currentStyle}
                                 onChange={(e) => changeRepresentation(e.target.value)}
-                                className="bg-transparent text-gray-900 font-semibold text-sm outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 font-semibold text-xs outline-none cursor-pointer"
                             >
                                 {representations.map(r => (
                                     <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -369,13 +374,13 @@ export default function MoleculeViewer({
                         </div>
 
                         {/* Color Scheme Selector */}
-                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-800">
-                            <Palette className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                        <div className="flex items-center gap-1.5 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 rounded-xl px-2.5 py-1.5 transition-colors">
+                            <Palette className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
                             <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Color:</span>
                             <select
                                 value={currentColor}
                                 onChange={(e) => changeColorScheme(e.target.value)}
-                                className="bg-transparent text-gray-900 font-semibold text-sm outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 font-semibold text-xs outline-none cursor-pointer"
                             >
                                 {Object.entries(colorSchemes).map(([label, value]) => (
                                     <option key={value} value={value}>{label}</option>
@@ -387,19 +392,19 @@ export default function MoleculeViewer({
                         <button
                             id="surface-toggle-btn"
                             onClick={toggleSurface}
-                            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm font-semibold border transition-all shadow-xs ${
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shadow-xs ${
                                 surfaceShowing
                                     ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
                                     : 'bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200'
                             }`}
                         >
-                            <Box className="w-4 h-4" />
+                            <Box className="w-3.5 h-3.5" />
                             <span>{surfaceShowing ? 'Hide Surface' : 'Show Surface'}</span>
                         </button>
 
                         {/* Opacity Slider */}
                         {surfaceShowing && (
-                            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 text-sm text-indigo-900 animate-in fade-in duration-150">
+                            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-2.5 py-1 text-xs text-indigo-900 animate-in fade-in duration-150">
                                 <span className="font-semibold text-xs text-indigo-700">Opacity:</span>
                                 <input
                                     id="surface-opacity-slider"
@@ -409,19 +414,16 @@ export default function MoleculeViewer({
                                     step="0.05"
                                     value={surfaceOpacity}
                                     onChange={(e) => changeSurfaceOpacity(e.target.value)}
-                                    className="w-20 h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    className="w-18 h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <span className="font-mono text-xs font-bold text-indigo-900 w-8 text-right">
+                                <span className="font-mono text-xs font-bold text-indigo-900 w-7 text-right">
                                     {Math.round(surfaceOpacity * 100)}%
                                 </span>
                             </div>
                         )}
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* 3D Canvas Area */}
-            <div className="flex-1 w-full h-full relative min-h-0">
                 {loading && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-100/90 z-10">
                         <div className="flex flex-col items-center gap-2">
@@ -448,7 +450,7 @@ export default function MoleculeViewer({
 
                 {/* Subtle atom annotation hint watermark */}
                 {onAtomClick && (
-                    <div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-full bg-white/85 backdrop-blur-sm border border-gray-200 text-[11px] text-gray-500 shadow-2xs pointer-events-none flex items-center gap-1.5">
+                    <div className="absolute bottom-3.5 left-3.5 px-3 py-1 rounded-full bg-white/85 backdrop-blur-sm border border-gray-200 text-xs text-gray-600 shadow-xs pointer-events-none flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
                         Click any atom to add annotation
                     </div>
