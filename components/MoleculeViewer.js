@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useRef, useState, useCallback } from 'react'
-import { Layers, Palette, Box, History, GitBranch, Loader2 } from 'lucide-react'
+import { Layers, Palette, Box, History, GitBranch, Loader2, SlidersHorizontal, ChevronDown, ChevronRight } from 'lucide-react'
 
 const representations = ['cartoon', 'stick', 'sphere', 'line', 'cross']
 
@@ -36,6 +36,7 @@ export default function MoleculeViewer({
     const [currentColor, setCurrentColor] = useState('chain')
     const [surfaceShowing, setSurfaceShowing] = useState(false)
     const [surfaceOpacity, setSurfaceOpacity] = useState(0.7)
+    const [controlsCollapsed, setControlsCollapsed] = useState(false)
 
     const styleRef = useRef(currentStyle)
     const colorRef = useRef(currentColor)
@@ -427,71 +428,95 @@ export default function MoleculeViewer({
             <div className="flex-1 w-full h-full relative min-h-0">
                 {/* Floating 3D Visualization Controls in Top-Right Corner */}
                 {!loading && !error && (
-                    <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-md border border-gray-200/90 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
-                        {/* Style Selector */}
-                        <div className="flex items-center gap-1.5 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 rounded-xl px-2.5 py-1.5 transition-colors">
-                            <Layers className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                            <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Style:</span>
-                            <select
-                                value={currentStyle}
-                                onChange={(e) => changeRepresentation(e.target.value)}
-                                className="bg-transparent text-gray-900 font-semibold text-xs outline-none cursor-pointer"
-                            >
-                                {representations.map(r => (
-                                    <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Color Scheme Selector */}
-                        <div className="flex items-center gap-1.5 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 rounded-xl px-2.5 py-1.5 transition-colors">
-                            <Palette className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                            <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Color:</span>
-                            <select
-                                value={currentColor}
-                                onChange={(e) => changeColorScheme(e.target.value)}
-                                className="bg-transparent text-gray-900 font-semibold text-xs outline-none cursor-pointer"
-                            >
-                                {Object.entries(colorSchemes).map(([label, value]) => (
-                                    <option key={value} value={value}>{label}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Surface Toggle Button */}
+                    controlsCollapsed ? (
+                        /* Collapsed Compact Button */
                         <button
-                            id="surface-toggle-btn"
-                            onClick={toggleSurface}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shadow-xs ${
-                                surfaceShowing
-                                    ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
-                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200'
-                            }`}
+                            onClick={() => setControlsCollapsed(false)}
+                            className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2 bg-white/90 hover:bg-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-md border border-gray-200/90 text-xs font-semibold text-gray-700 hover:text-indigo-600 transition-all cursor-pointer group animate-in fade-in zoom-in-95 duration-150"
+                            title="Expand 3D visualization controls"
                         >
-                            <Box className="w-3.5 h-3.5" />
-                            <span>{surfaceShowing ? 'Hide Surface' : 'Show Surface'}</span>
+                            <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                            <span>3D Controls</span>
+                            <span className="text-[10px] text-gray-400 font-mono capitalize">({currentStyle})</span>
+                            <ChevronDown className="w-3.5 h-3.5 text-gray-400 group-hover:text-indigo-600" />
                         </button>
-
-                        {/* Opacity Slider */}
-                        {surfaceShowing && (
-                            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-2.5 py-1 text-xs text-indigo-900 animate-in fade-in duration-150">
-                                <span className="font-semibold text-xs text-indigo-700">Opacity:</span>
-                                <input
-                                    id="surface-opacity-slider"
-                                    type="range"
-                                    min="0.1"
-                                    max="1.0"
-                                    step="0.05"
-                                    value={surfaceOpacity}
-                                    onChange={(e) => changeSurfaceOpacity(e.target.value)}
-                                    className="w-18 h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                />
-                                <span className="font-mono text-xs font-bold text-indigo-900 w-7 text-right">
-                                    {Math.round(surfaceOpacity * 100)}%
-                                </span>
+                    ) : (
+                        /* Expanded Floating Capsule */
+                        <div className="absolute top-3.5 right-3.5 z-20 flex items-center gap-2 bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-md border border-gray-200/90 text-sm animate-in fade-in slide-in-from-top-1 duration-200">
+                            {/* Style Selector */}
+                            <div className="flex items-center gap-1.5 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 rounded-xl px-2.5 py-1.5 transition-colors">
+                                <Layers className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                                <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Style:</span>
+                                <select
+                                    value={currentStyle}
+                                    onChange={(e) => changeRepresentation(e.target.value)}
+                                    className="bg-transparent text-gray-900 font-semibold text-xs outline-none cursor-pointer"
+                                >
+                                    {representations.map(r => (
+                                        <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
+                                    ))}
+                                </select>
                             </div>
-                        )}
-                    </div>
+
+                            {/* Color Scheme Selector */}
+                            <div className="flex items-center gap-1.5 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 rounded-xl px-2.5 py-1.5 transition-colors">
+                                <Palette className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                                <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Color:</span>
+                                <select
+                                    value={currentColor}
+                                    onChange={(e) => changeColorScheme(e.target.value)}
+                                    className="bg-transparent text-gray-900 font-semibold text-xs outline-none cursor-pointer"
+                                >
+                                    {Object.entries(colorSchemes).map(([label, value]) => (
+                                        <option key={value} value={value}>{label}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Surface Toggle Button */}
+                            <button
+                                id="surface-toggle-btn"
+                                onClick={toggleSurface}
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all shadow-xs cursor-pointer ${
+                                    surfaceShowing
+                                        ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
+                                        : 'bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200'
+                                }`}
+                            >
+                                <Box className="w-3.5 h-3.5" />
+                                <span>{surfaceShowing ? 'Hide Surface' : 'Show Surface'}</span>
+                            </button>
+
+                            {/* Opacity Slider */}
+                            {surfaceShowing && (
+                                <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-2.5 py-1 text-xs text-indigo-900 animate-in fade-in duration-150">
+                                    <span className="font-semibold text-xs text-indigo-700">Opacity:</span>
+                                    <input
+                                        id="surface-opacity-slider"
+                                        type="range"
+                                        min="0.1"
+                                        max="1.0"
+                                        step="0.05"
+                                        value={surfaceOpacity}
+                                        onChange={(e) => changeSurfaceOpacity(e.target.value)}
+                                        className="w-18 h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    />
+                                    <span className="font-mono text-xs font-bold text-indigo-900 w-7 text-right">
+                                        {Math.round(surfaceOpacity * 100)}%
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Collapse Button */}
+                            <button
+                                onClick={() => setControlsCollapsed(true)}
+                                className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer ml-0.5"
+                                title="Collapse 3D controls"
+                            >
+                                <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    )
                 )}
 
                 {loading && (
