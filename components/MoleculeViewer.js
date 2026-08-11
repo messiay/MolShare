@@ -311,17 +311,17 @@ export default function MoleculeViewer({
         <div className="w-full h-full flex flex-col bg-gray-100 overflow-hidden">
             {/* Docked Top Workstation Toolbar */}
             {!error && (
-                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-3 py-1.5 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-2xs overflow-x-auto scrollbar-hide flex-nowrap">
+                <div className="w-full bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-2.5 flex items-center justify-between gap-3 flex-shrink-0 z-10 shadow-xs overflow-x-auto scrollbar-hide flex-nowrap">
                     {/* Left: Version History & Upload New Version */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2.5 flex-shrink-0">
                         {versions && versions.length > 0 && (
-                            <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
-                                <History className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+                            <div className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100/80 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-800 transition-colors">
+                                <History className="w-4 h-4 text-indigo-600 flex-shrink-0" />
                                 <span className="font-semibold text-gray-600">Version:</span>
                                 <select
                                     value={activeVersionId || ''}
                                     onChange={(e) => onSelectVersion && onSelectVersion(e.target.value)}
-                                    className="bg-transparent text-gray-900 font-medium outline-none cursor-pointer pr-1"
+                                    className="bg-transparent text-gray-900 font-semibold text-sm outline-none cursor-pointer pr-1"
                                 >
                                     {versions.map((v, idx) => (
                                         <option key={v.id} value={v.id}>
@@ -333,11 +333,11 @@ export default function MoleculeViewer({
                         )}
 
                         {isOwner && onUploadNewVersion && (
-                            <label className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-200 transition-all cursor-pointer shadow-2xs whitespace-nowrap">
+                            <label className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-all cursor-pointer shadow-xs whitespace-nowrap">
                                 {uploadingVersion ? (
-                                    <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
+                                    <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
                                 ) : (
-                                    <GitBranch className="w-3.5 h-3.5 text-indigo-600" />
+                                    <GitBranch className="w-4 h-4 text-indigo-600" />
                                 )}
                                 <span>{uploadingVersion ? 'Saving...' : 'Upload New Version'}</span>
                                 <input
@@ -352,15 +352,15 @@ export default function MoleculeViewer({
                     </div>
 
                     {/* Right: 3D Visualization Controls */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2.5 flex-shrink-0">
                         {/* Style Selector */}
-                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
-                            <Layers className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                            <span className="text-gray-500 font-medium">Style:</span>
+                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-800">
+                            <Layers className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                            <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Style:</span>
                             <select
                                 value={currentStyle}
                                 onChange={(e) => changeRepresentation(e.target.value)}
-                                className="bg-transparent text-gray-900 font-medium outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 font-semibold text-sm outline-none cursor-pointer"
                             >
                                 {representations.map(r => (
                                     <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
@@ -369,13 +369,13 @@ export default function MoleculeViewer({
                         </div>
 
                         {/* Color Scheme Selector */}
-                        <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2.5 py-1 text-xs text-gray-700">
-                            <Palette className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                            <span className="text-gray-500 font-medium">Color:</span>
+                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-1.5 text-sm text-gray-800">
+                            <Palette className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                            <span className="text-gray-500 font-semibold text-xs uppercase tracking-wide">Color:</span>
                             <select
                                 value={currentColor}
                                 onChange={(e) => changeColorScheme(e.target.value)}
-                                className="bg-transparent text-gray-900 font-medium outline-none cursor-pointer"
+                                className="bg-transparent text-gray-900 font-semibold text-sm outline-none cursor-pointer"
                             >
                                 {Object.entries(colorSchemes).map(([label, value]) => (
                                     <option key={value} value={value}>{label}</option>
@@ -387,20 +387,20 @@ export default function MoleculeViewer({
                         <button
                             id="surface-toggle-btn"
                             onClick={toggleSurface}
-                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-sm font-semibold border transition-all shadow-xs ${
                                 surfaceShowing
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs hover:bg-indigo-700'
-                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
+                                    ? 'bg-indigo-600 text-white border-indigo-600 hover:bg-indigo-700'
+                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200'
                             }`}
                         >
-                            <Box className="w-3.5 h-3.5" />
-                            {surfaceShowing ? 'Hide Surface' : 'Show Surface'}
+                            <Box className="w-4 h-4" />
+                            <span>{surfaceShowing ? 'Hide Surface' : 'Show Surface'}</span>
                         </button>
 
                         {/* Opacity Slider */}
                         {surfaceShowing && (
-                            <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 rounded-lg px-2.5 py-1 text-xs text-indigo-900 animate-in fade-in duration-150">
-                                <span className="font-medium">Opacity:</span>
+                            <div className="flex items-center gap-2 bg-indigo-50 border border-indigo-200 rounded-xl px-3 py-1.5 text-sm text-indigo-900 animate-in fade-in duration-150">
+                                <span className="font-semibold text-xs text-indigo-700">Opacity:</span>
                                 <input
                                     id="surface-opacity-slider"
                                     type="range"
@@ -409,9 +409,9 @@ export default function MoleculeViewer({
                                     step="0.05"
                                     value={surfaceOpacity}
                                     onChange={(e) => changeSurfaceOpacity(e.target.value)}
-                                    className="w-16 h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                    className="w-20 h-2 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                                 />
-                                <span className="font-mono text-[11px] w-7 text-right">
+                                <span className="font-mono text-xs font-bold text-indigo-900 w-8 text-right">
                                     {Math.round(surfaceOpacity * 100)}%
                                 </span>
                             </div>

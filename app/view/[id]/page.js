@@ -288,17 +288,17 @@ export default function ViewPage() {
             {/* Left Main Stage: Clean Top Nav & Canvas */}
             <div className="flex-1 relative bg-slate-100 flex flex-col min-w-0 overflow-hidden">
                 {/* 1. Aligned Top Navigation Bar */}
-                <div className="h-13 bg-white border-b border-gray-200 px-3 flex items-center justify-between gap-2.5 flex-shrink-0 z-20 shadow-2xs">
+                <div className="h-15 bg-white border-b border-gray-200 px-4 flex items-center justify-between gap-3 flex-shrink-0 z-20 shadow-xs">
                     {/* Back link */}
                     <Link
                         href="/dashboard"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 transition-colors flex-shrink-0"
+                        className="flex items-center gap-2 px-3.5 py-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 transition-colors flex-shrink-0"
                     >
-                        <ArrowLeft className="w-3.5 h-3.5" />
+                        <ArrowLeft className="w-4 h-4" />
                         <span>Repository</span>
                     </Link>
 
-                    <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
+                    <div className="h-6 w-px bg-gray-200 flex-shrink-0" />
 
                     {/* Horizontal File Carousel */}
                     {projectFiles.length > 0 && (
@@ -313,37 +313,37 @@ export default function ViewPage() {
                         />
                     )}
 
-                    <div className="h-5 w-px bg-gray-200 flex-shrink-0" />
+                    <div className="h-6 w-px bg-gray-200 flex-shrink-0" />
 
                     {/* View Switcher: 3D Structure vs Data Table */}
-                    <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg border border-gray-200 flex-shrink-0">
+                    <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200 flex-shrink-0">
                         <button
                             onClick={() => setActiveView('3d')}
-                            className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
+                            className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all ${
                                 activeView === '3d'
-                                    ? 'bg-white text-indigo-700 shadow-2xs font-semibold'
+                                    ? 'bg-white text-indigo-700 shadow-xs'
                                     : 'text-gray-600 hover:text-gray-900'
                             }`}
                         >
-                            <Box className="w-3.5 h-3.5 text-indigo-600" />
+                            <Box className="w-4 h-4 text-indigo-600" />
                             <span>3D Structure</span>
                         </button>
 
                         {project.csv_file_url ? (
                             <button
                                 onClick={() => setActiveView('csv')}
-                                className={`px-2.5 py-1 rounded-md text-xs font-medium flex items-center gap-1.5 transition-all ${
+                                className={`px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all ${
                                     activeView === 'csv'
-                                        ? 'bg-white text-emerald-700 shadow-2xs font-semibold'
+                                        ? 'bg-white text-emerald-700 shadow-xs'
                                         : 'text-gray-600 hover:text-gray-900'
                                 }`}
                             >
-                                <FileText className="w-3.5 h-3.5 text-emerald-600" />
+                                <FileText className="w-4 h-4 text-emerald-600" />
                                 <span>Data Table</span>
                             </button>
                         ) : isOwner ? (
-                            <label className="px-2 py-1 rounded-md text-xs font-medium flex items-center gap-1 text-gray-500 hover:text-indigo-600 hover:bg-white cursor-pointer transition-all">
-                                {uploadingCsv ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                            <label className="px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1.5 text-gray-600 hover:text-indigo-600 hover:bg-white cursor-pointer transition-all">
+                                {uploadingCsv ? <Loader2 className="w-4 h-4 animate-spin text-indigo-600" /> : <Plus className="w-4 h-4 text-indigo-600" />}
                                 <span>Add CSV</span>
                                 <input
                                     type="file"

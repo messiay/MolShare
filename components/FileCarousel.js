@@ -100,46 +100,46 @@ export default function FileCarousel({ files, activeIndex, onSelect, isOwner, pr
     if (!files || files.length === 0) return null
 
     return (
-        <div className="flex items-center gap-1.5 flex-1 max-w-full overflow-hidden">
+        <div className="flex items-center gap-2 flex-1 max-w-full overflow-hidden">
             {/* Scrollable File Cards */}
             <div
                 ref={scrollRef}
-                className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide flex-1 py-1"
+                className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 py-1"
                 style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
                 {files.map((file, index) => (
                     <button
                         key={file.id}
                         onClick={() => onSelect(index)}
-                        className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 border ${
+                        className={`group relative flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all flex-shrink-0 border ${
                             index === activeIndex
-                                ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-xs ring-1 ring-indigo-200'
-                                : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-900'
+                                ? 'bg-indigo-50 text-indigo-700 border-indigo-300 shadow-xs ring-2 ring-indigo-100'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:text-gray-900'
                         }`}
                     >
-                        <FileType className="w-3.5 h-3.5 flex-shrink-0 text-indigo-600" />
-                        <span className="max-w-[140px] truncate">{file.file_name}</span>
+                        <FileType className="w-4 h-4 flex-shrink-0 text-indigo-600" />
+                        <span className="max-w-[160px] truncate">{file.file_name}</span>
                         
                         {/* Version Badge */}
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-semibold ${
+                        <span className={`text-xs px-2 py-0.5 rounded-md font-mono font-bold ${
                             index === activeIndex
                                 ? 'bg-indigo-200 text-indigo-800'
-                                : 'bg-gray-200 text-gray-600'
+                                : 'bg-gray-200 text-gray-700'
                         }`}>
                             v{file.version_number || 1}
                         </span>
 
-                        <span className="text-[9px] px-1 py-0.5 rounded uppercase font-mono bg-white/70 text-gray-500 border border-gray-200">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold uppercase bg-white text-gray-500 border border-gray-200 shadow-2xs">
                             {file.file_extension}
                         </span>
 
                         {isOwner && files.length > 1 && (
                             <span
                                 onClick={(e) => handleRemoveFile(e, file.id, file.file_url)}
-                                className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 cursor-pointer text-[10px]"
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 cursor-pointer text-xs font-bold shadow-xs"
                                 title="Delete this file"
                             >
-                                <X className="w-2.5 h-2.5" />
+                                <X className="w-3 h-3" />
                             </span>
                         )}
                     </button>
@@ -147,11 +147,11 @@ export default function FileCarousel({ files, activeIndex, onSelect, isOwner, pr
 
                 {/* Add Molecule Button */}
                 {isOwner && (
-                    <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 border border-dashed border-gray-300 hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0 whitespace-nowrap">
+                    <label className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 border border-dashed border-gray-300 hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0 whitespace-nowrap">
                         {uploading ? (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
                         ) : (
-                            <Plus className="w-3.5 h-3.5" />
+                            <Plus className="w-4 h-4 text-indigo-600" />
                         )}
                         <span>{uploading ? 'Uploading...' : 'Add Molecule'}</span>
                         <input
@@ -168,20 +168,20 @@ export default function FileCarousel({ files, activeIndex, onSelect, isOwner, pr
 
             {/* Scroll Navigation Controls */}
             {files.length > 3 && (
-                <div className="flex items-center gap-0.5 flex-shrink-0 border-l border-gray-200 pl-1.5">
+                <div className="flex items-center gap-1 flex-shrink-0 border-l border-gray-200 pl-2">
                     <button
                         onClick={() => scroll('left')}
-                        className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
                         title="Scroll left"
                     >
-                        <ChevronLeft className="w-3.5 h-3.5" />
+                        <ChevronLeft className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => scroll('right')}
-                        className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-900 transition-colors"
                         title="Scroll right"
                     >
-                        <ChevronRight className="w-3.5 h-3.5" />
+                        <ChevronRight className="w-4 h-4" />
                     </button>
                 </div>
             )}
