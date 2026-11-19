@@ -55,21 +55,6 @@ export default function Home() {
     setLoading(false)
   }
 
-  const handleDummyLogin = async () => {
-    setLoading(true)
-    setError(null)
-    const { error } = await supabase.auth.signInWithPassword({
-      email: 'demo@molshare.com',
-      password: 'MolShare2025',
-    })
-    if (error) {
-      setError(error.message)
-      setLoading(false)
-    } else {
-      router.push('/dashboard')
-    }
-  }
-
   const handleEmailLogin = async (e) => {
     e.preventDefault()
     setLoading(true)
@@ -136,21 +121,10 @@ export default function Home() {
           {/* Auth Section */}
           <div className="max-w-md mx-auto mt-12 bg-white p-8 rounded-2xl shadow-xl shadow-indigo-100 border border-indigo-50">
             
-            {/* Reviewer / Local Demo Notice */}
-            <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-left space-y-2.5">
-              <div>
-                <p className="text-sm font-semibold text-indigo-900 mb-1">Quick Demo Access</p>
-                <p className="text-xs text-indigo-700">Create any dummy account below, use <strong className="select-all">demo@molshare.com</strong> / <strong className="select-all">MolShare2025</strong>, or click below for instant access:</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleDummyLogin}
-                disabled={loading}
-                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>⚡ 1-Click Dummy Login (Enter Repository)</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+            {/* Reviewer Notice */}
+            <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-left">
+              <p className="text-sm font-semibold text-indigo-900 mb-1">Peer Reviewers (Application Note)</p>
+              <p className="text-xs text-indigo-700">Feel free to create a new account below with any dummy email, or use the demo credentials provided in the manuscript: <br/><strong className="select-all">demo@molshare.com</strong> / <strong className="select-all">MolShare2025</strong></p>
             </div>
 
             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
