@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/utils/supabase'
-import { X, Send, Loader2, Atom, MapPin, Trash2 } from 'lucide-react'
+import { X, Send, Loader2, Atom, MapPin, Trash2, Crosshair } from 'lucide-react'
 
 export default function AtomAnnotationPopup({
     atomData,
@@ -11,7 +11,8 @@ export default function AtomAnnotationPopup({
     user,
     isOwner,
     onClose,
-    onAnnotationSaved
+    onAnnotationSaved,
+    onFocusAtom
 }) {
     const [content, setContent] = useState('')
     const [saving, setSaving] = useState(false)
@@ -119,12 +120,24 @@ export default function AtomAnnotationPopup({
                             {atomData.chain ? ` · Chain ${atomData.chain}` : ''}
                         </span>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-1 hover:bg-white/20 rounded transition-colors"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1">
+                        {onFocusAtom && (
+                            <button
+                                onClick={() => onFocusAtom(atomData)}
+                                className="flex items-center gap-1 px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded-md text-[11px] font-semibold transition-colors cursor-pointer"
+                                title="Center camera and lock rotation/zoom pivot on this atom"
+                            >
+                                <Crosshair className="w-3 h-3" />
+                                <span>Lock Pivot</span>
+                            </button>
+                        )}
+                        <button
+                            onClick={onClose}
+                            className="p-1 hover:bg-white/20 rounded transition-colors cursor-pointer"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
                 <div className="flex items-center gap-3 text-xs text-white/80">
                     <span>Atom: <strong className="text-white">{atomData.atom || '?'}</strong></span>

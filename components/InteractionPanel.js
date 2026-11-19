@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/utils/supabase'
-import { Save, Lock, MessageSquare, StickyNote, Send, Trash2, Atom } from 'lucide-react'
+import { Save, Lock, MessageSquare, StickyNote, Send, Trash2, Atom, Activity, Crosshair, Pin, Circle, Link2, Check } from 'lucide-react'
 
 // Helper to generate consistent avatar color from string (email/id)
 const getAvatarColor = (str) => {
@@ -18,8 +18,33 @@ const getAvatarColor = (str) => {
     return colors[Math.abs(hash) % colors.length]
 }
 
-export default function InteractionPanel({ projectId, initialNotes, isOwner, user, annotations = [], onAnnotationDeleted }) {
-    const [activeTab, setActiveTab] = useState('notes') // 'notes' | 'comments' | 'annotations'
+export default function InteractionPanel({
+    projectId,
+    initialNotes,
+    isOwner,
+    user,
+    annotations = [],
+    onAnnotationDeleted,
+    onFocusAnnotation,
+    viewLogs = [],
+    isRecordingLog = true,
+    onToggleRecordingLog,
+    onClearViewLogs,
+    onDeleteViewLog,
+    onRestoreViewLog,
+    onPinCurrentView
+}) {
+    const [activeTab, setActiveTab] = useState('notes') // 'notes' | 'comments' | 'annotations' | 'viewlog'
+    const [copiedLogId, setCopiedLogId] = useState(null)
+
+    const handleCopyViewLink = (e, logId) => {
+        e.stopPropagation()
+        if (typeof window === 'undefined') return
+        const url = `${window.location.origin}/view/${projectId}?view=${encodeURIComponent(logId)}`
+        navigator.clipboard.writeText(url)
+        setCopiedLogId(logId)
+        setTimeout(() => setCopiedLogId(null), 2000)
+    }
 
     // Notes Logic
     const [notes, setNotes] = useState(initialNotes || '')
@@ -150,7 +175,7 @@ export default function InteractionPanel({ projectId, initialNotes, isOwner, use
                 </button>
                 <button
                     onClick={() => setActiveTab('annotations')}
-                    className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'annotations'
+                    className={`py-4 text-sm font-medium flex items-center gap-1.5 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'annotations'
                         ? 'border-indigo-600 text-indigo-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
@@ -160,6 +185,22 @@ export default function InteractionPanel({ projectId, initialNotes, isOwner, use
                     {annotations.length > 0 && (
                         <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-mono">
                             {annotations.length}
+                        </span>
+                    )}
+                </button>
+                <button
+                    onClick={() => setActiveTab('viewlog')}
+                    className={`py-4 text-sm font-medium flex items-center gap-1.5 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'viewlog'
+                        ? 'border-emerald-600 text-emerald-700'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                        }`}
+                    title="Inspection & Camera Movement Log Sheet"
+                >
+                    <Activity className="w-4 h-4" />
+                    View Log
+                    {viewLogs.length > 0 && (
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-mono">
+                            {viewLogs.length}
                         </span>
                     )}
                 </button>
@@ -298,7 +339,12 @@ export default function InteractionPanel({ projectId, initialNotes, isOwner, use
                                             const canDelete = user?.id === ann.user_id || isOwner
 
                                             return (
-                                                <div key={ann.id} className="group bg-gray-50 rounded-xl p-3 border border-gray-100 hover:border-indigo-200 transition-colors">
+                                                <div
+                                                    key={ann.id}
+                                                    onClick={() => onFocusAnnotation && onFocusAnnotation(ann)}
+                                                    className="group bg-gray-50 rounded-xl p-3 border border-gray-100 hover:border-indigo-300 hover:bg-indigo-50/30 transition-colors cursor-pointer"
+                                                    title="Click to center & lock 3D camera pivot on this atom"
+                                                >
                                                     {/* Atom Badge */}
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-2">
@@ -313,7 +359,10 @@ export default function InteractionPanel({ projectId, initialNotes, isOwner, use
                                                         </div>
                                                         {canDelete && (
                                                             <button
-                                                                onClick={() => handleDeleteAnnotation(ann.id)}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation()
+                                                                    handleDeleteAnnotation(ann.id)
+                                                                }}
                                                                 className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-600 transition-all p-1"
                                                             >
                                                                 <Trash2 className="w-3 h-3" />
@@ -334,6 +383,148 @@ export default function InteractionPanel({ projectId, initialNotes, isOwner, use
                                         })}
                                     </div>
                                 ))
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* VIEW LOG TAB (Meaningful Inspection & Camera Movement Log Sheet) */}
+                {activeTab === 'viewlog' && (
+                    <div className="h-full flex flex-col">
+                        {/* Top Bar: Owner Controls vs Visitor Read-Only Notice */}
+                        {isOwner ? (
+                            <div className="px-4 py-2.5 bg-slate-50 border-b border-gray-100 flex items-center justify-between gap-2">
+                                <button
+                                    onClick={() => onToggleRecordingLog && onToggleRecordingLog()}
+                                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors cursor-pointer ${
+                                        isRecordingLog
+                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            : 'bg-gray-100 text-gray-500 border-gray-200'
+                                    }`}
+                                    title="Toggle automatic recording of meaningful 3D inspection movements"
+                                >
+                                    <Circle className={`w-2.5 h-2.5 ${isRecordingLog ? 'fill-emerald-500 text-emerald-500 animate-pulse' : 'fill-gray-400 text-gray-400'}`} />
+                                    <span>{isRecordingLog ? 'Record: On' : 'Record: Off'}</span>
+                                </button>
+
+                                <div className="flex items-center gap-1.5">
+                                    <button
+                                        onClick={() => onPinCurrentView && onPinCurrentView()}
+                                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold transition-colors cursor-pointer"
+                                        title="Manually snapshot & pin the current 3D camera angle and style"
+                                    >
+                                        <Pin className="w-3 h-3" />
+                                        <span>Pin View</span>
+                                    </button>
+                                    {viewLogs.length > 0 && (
+                                        <button
+                                            onClick={() => onClearViewLogs && onClearViewLogs()}
+                                            className="px-2 py-1 rounded-lg bg-white hover:bg-red-50 text-gray-500 hover:text-red-600 border border-gray-200 text-xs font-medium transition-colors cursor-pointer"
+                                            title="Clear movement log sheet"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="px-4 py-2 bg-slate-50 border-b border-gray-100 text-xs text-gray-500 flex items-center gap-2">
+                                <Lock className="w-3 h-3 text-gray-400" />
+                                <span>Owner&apos;s recorded viewpoints — click any step to inspect.</span>
+                            </div>
+                        )}
+
+                        {/* Log Sheet Entries */}
+                        <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+                            {viewLogs.length === 0 ? (
+                                <div className="text-center py-10 px-4">
+                                    <Activity className="w-10 h-10 text-gray-300 mx-auto mb-3" />
+                                    <p className="text-gray-500 text-sm font-medium">No inspection movements logged yet.</p>
+                                    <p className="text-gray-400 text-xs mt-1 leading-relaxed">
+                                        As you focus pivots, isolate binding pockets, measure distances, or pause on a camera angle for 1.5s, each step is logged here with full 3D telemetry.
+                                    </p>
+                                </div>
+                            ) : (
+                                viewLogs.map((entry, idx) => {
+                                    const stepNumber = String(viewLogs.length - idx).padStart(2, '0')
+                                    const badgeColors = {
+                                        pivot: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+                                        pocket: 'bg-cyan-100 text-cyan-800 border-cyan-200',
+                                        distance: 'bg-amber-100 text-amber-800 border-amber-200',
+                                        surface: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+                                        style: 'bg-violet-100 text-violet-800 border-violet-200',
+                                        camera: 'bg-slate-200 text-slate-700 border-slate-300',
+                                        pin: 'bg-rose-100 text-rose-800 border-rose-200',
+                                        annotation: 'bg-blue-100 text-blue-800 border-blue-200'
+                                    }
+                                    const badgeClass = badgeColors[entry.category] || badgeColors.camera
+                                    const timeStr = entry.timestamp
+                                        ? new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+                                        : ''
+
+                                    return (
+                                        <div
+                                            key={entry.id}
+                                            onClick={() => onRestoreViewLog && onRestoreViewLog(entry)}
+                                            className="group bg-gray-50 hover:bg-emerald-50/40 rounded-xl p-3 border border-gray-200/80 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs"
+                                            title="Click to restore this exact 3D camera viewpoint, pivot, and visual representation"
+                                        >
+                                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[10px] font-mono font-bold text-gray-400">
+                                                        #{stepNumber}
+                                                    </span>
+                                                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase border ${badgeClass}`}>
+                                                        {entry.category}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[10px] font-mono text-gray-400">{timeStr}</span>
+                                                    <button
+                                                        onClick={(e) => handleCopyViewLink(e, entry.id)}
+                                                        className={`p-1 rounded transition-colors cursor-pointer ${
+                                                            copiedLogId === entry.id
+                                                                ? 'text-emerald-600 bg-emerald-50'
+                                                                : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
+                                                        }`}
+                                                        title="Copy direct shareable link to this exact 3D viewpoint"
+                                                    >
+                                                        {copiedLogId === entry.id ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+                                                    </button>
+                                                    {isOwner && (
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation()
+                                                                onDeleteViewLog && onDeleteViewLog(entry.id)
+                                                            }}
+                                                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-600 p-0.5 transition-opacity cursor-pointer"
+                                                            title="Remove log entry"
+                                                        >
+                                                            <Trash2 className="w-3 h-3" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="text-xs font-bold text-gray-900 flex items-center justify-between gap-1">
+                                                <span>{entry.title}</span>
+                                                <Crosshair className="w-3.5 h-3.5 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                                            </div>
+
+                                            {entry.detail && (
+                                                <div className="text-[11px] text-gray-600 mt-0.5">
+                                                    {entry.detail}
+                                                </div>
+                                            )}
+
+                                            {entry.telemetry && (
+                                                <div className="mt-1.5 px-2 py-1 rounded-lg bg-white border border-gray-200/80 text-[10px] font-mono text-slate-600 truncate">
+                                                    {entry.telemetry}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )
+                                })
                             )}
                         </div>
                     </div>

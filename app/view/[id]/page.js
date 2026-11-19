@@ -32,6 +32,78 @@ export default function ViewPage() {
     const [annotations, setAnnotations] = useState([])
     const [clickedAtom, setClickedAtom] = useState(null)
     const [atomPopupPosition, setAtomPopupPosition] = useState({ x: 0, y: 0 })
+    const [externalFocusAtom, setExternalFocusAtom] = useState(null)
+
+    // Meaningful Inspection & Movement View Log State
+    const [viewLogs, setViewLogs] = useState([])
+    const [isRecordingLog, setIsRecordingLog] = useState(true)
+    const [restoreSnapshot, setRestoreSnapshot] = useState(null)
+
+    const applyDeepLinkViewIfPresent = (logsList) => {
+        if (typeof window === 'undefined' || !Array.isArray(logsList) || logsList.length === 0) return
+        const params = new URLSearchParams(window.location.search)
+        const targetLogId = params.get('view')
+        if (!targetLogId) return
+        const match = logsList.find(l => l.id === targetLogId)
+        if (match) {
+            setTimeout(() => {
+                setRestoreSnapshot({ ...match, _ts: Date.now() })
+            }, 600)
+        }
+    }
+
+    const persistViewLogs = (updater, syncToDb = true) => {
+        setViewLogs(prev => {
+            const next = typeof updater === 'function' ? updater(prev) : updater
+            const trimmed = (next || []).slice(0, 50)
+            if (id && typeof window !== 'undefined') {
+                try {
+                    window.localStorage.setItem(`molshare_view_logs_${id}`, JSON.stringify(trimmed))
+                } catch {
+                    // ignore
+                }
+            }
+            if (syncToDb && id && project && user?.id === project.owner_id) {
+                supabase
+                    .from('projects')
+                    .update({ view_logs: trimmed })
+                    .eq('id', id)
+                    .then(({ error }) => {
+                        if (error) {
+                            console.warn('View log cloud sync skipped (run view_logs.sql in Supabase if column missing):', error.message)
+                        }
+                    })
+            }
+            return trimmed
+        })
+    }
+
+    const handleLogEvent = (entry) => {
+        // Only the project owner can record movements onto the shared project log
+        if (!project || user?.id !== project.owner_id) return
+        if (!isRecordingLog && entry.category !== 'pin') return
+        persistViewLogs(prev => {
+            const top = prev[0]
+            if (top) {
+                const ageMs = Date.now() - new Date(top.timestamp).getTime()
+                // Rule 3: Smart De-Duplication — collapse rapid tweaks of the same category or camera adjustments on same pivot
+                const sameCategoryRapid =
+                    ['style', 'surface', 'pocket'].includes(entry.category) &&
+                    top.category === entry.category &&
+                    ageMs < 6000
+                const sameCameraPivot =
+                    entry.category === 'camera' &&
+                    top.category === 'camera' &&
+                    top.title === entry.title &&
+                    ageMs < 12000
+
+                if (sameCategoryRapid || sameCameraPivot) {
+                    return [entry, ...prev.slice(1)]
+                }
+            }
+            return [entry, ...prev]
+        }, true)
+    }
 
     useEffect(() => {
         if (!id) return;
@@ -55,6 +127,21 @@ export default function ViewPage() {
 
         if (data) {
             setProject(data)
+
+            // Hydrate View Logs from Supabase (preferred for shared links) or fallback to localStorage
+            let loadedLogs = []
+            if (Array.isArray(data.view_logs) && data.view_logs.length > 0) {
+                loadedLogs = data.view_logs
+            } else if (typeof window !== 'undefined') {
+                try {
+                    const saved = window.localStorage.getItem(`molshare_view_logs_${id}`)
+                    if (saved) loadedLogs = JSON.parse(saved)
+                } catch {
+                    // ignore
+                }
+            }
+            setViewLogs(loadedLogs)
+            applyDeepLinkViewIfPresent(loadedLogs)
 
             // 2. Fetch Owner Profile
             const { data: profile } = await supabase
@@ -375,6 +462,10 @@ export default function ViewPage() {
                                 onUploadNewVersion={handleUploadNewVersion}
                                 uploadingVersion={uploadingVersion}
                                 isOwner={isOwner}
+                                allProjectFiles={projectFiles}
+                                externalFocusAtom={externalFocusAtom}
+                                onLogEvent={handleLogEvent}
+                                restoreSnapshot={restoreSnapshot}
                             />
 
                             {/* Atom Annotation Popup */}
@@ -388,6 +479,9 @@ export default function ViewPage() {
                                     isOwner={isOwner}
                                     onClose={handleCloseAtomPopup}
                                     onAnnotationSaved={handleAnnotationSaved}
+                                    onFocusAtom={(atom) => {
+                                        setExternalFocusAtom({ ...atom, _ts: Date.now() })
+                                    }}
                                 />
                             )}
                         </div>
@@ -507,7 +601,7 @@ export default function ViewPage() {
                     </div>
                 </div>
 
-                {/* Interactive Panels: Notes, Comments & Annotations */}
+                {/* Interactive Panels: Notes, Comments, Annotations & View Log */}
                 <div className="flex-1 overflow-hidden">
                     <InteractionPanel
                         projectId={project.id}
@@ -516,6 +610,37 @@ export default function ViewPage() {
                         user={user}
                         annotations={annotations}
                         onAnnotationDeleted={handleAnnotationSaved}
+                        onFocusAnnotation={(ann) => {
+                            setActiveView('3d')
+                            setExternalFocusAtom({
+                                serial: ann.atom_serial,
+                                atom: ann.atom_name,
+                                resn: ann.residue_name,
+                                resi: ann.residue_id,
+                                chain: ann.chain,
+                                x: ann.x,
+                                y: ann.y,
+                                z: ann.z,
+                                _ts: Date.now()
+                            })
+                        }}
+                        viewLogs={viewLogs}
+                        isRecordingLog={isRecordingLog}
+                        onToggleRecordingLog={() => setIsRecordingLog(r => !r)}
+                        onClearViewLogs={() => persistViewLogs([])}
+                        onDeleteViewLog={(logId) => persistViewLogs(prev => prev.filter(x => x.id !== logId))}
+                        onRestoreViewLog={(entry) => {
+                            setActiveView('3d')
+                            setRestoreSnapshot({ ...entry, _ts: Date.now() })
+                        }}
+                        onPinCurrentView={() => {
+                            setActiveView('3d')
+                            setRestoreSnapshot({
+                                manualPinRequest: true,
+                                title: 'Pinned Camera Viewpoint',
+                                _ts: Date.now()
+                            })
+                        }}
                     />
                 </div>
             </div>
