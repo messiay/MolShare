@@ -995,8 +995,21 @@ export default function MoleculeViewer({
         el.addEventListener('mousewheel', onWheel, { capture: true, passive: false })
         el.addEventListener('mousedown', onMouseDown)
         window.addEventListener('mouseup', onMouseUp)
+
+        let resizeObserver = null
+        if (typeof ResizeObserver !== 'undefined') {
+            resizeObserver = new ResizeObserver(() => {
+                if (viewerRef.current) {
+                    viewerRef.current.resize()
+                    viewerRef.current.render()
+                }
+            })
+            resizeObserver.observe(el)
+        }
+
         return () => {
             if (settleTimerRef.current) clearTimeout(settleTimerRef.current)
+            if (resizeObserver) resizeObserver.disconnect()
             el.removeEventListener('wheel', onWheel, { capture: true })
             el.removeEventListener('mousewheel', onWheel, { capture: true })
             el.removeEventListener('mousedown', onMouseDown)

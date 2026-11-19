@@ -152,54 +152,54 @@ export default function InteractionPanel({
     return (
         <div className="flex flex-col h-full bg-white">
             {/* Tab Header */}
-            <div className="px-4 border-b border-gray-100 flex items-center gap-4 bg-white overflow-x-auto">
+            <div className="px-2 border-b border-gray-100 flex items-center justify-between gap-1 bg-white">
                 <button
                     onClick={() => setActiveTab('notes')}
-                    className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'notes'
+                    className={`py-3 px-1.5 text-xs font-semibold flex items-center gap-1 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'notes'
                         ? 'border-blue-600 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    <StickyNote className="w-4 h-4" />
+                    <StickyNote className="w-3.5 h-3.5" />
                     Notes
                 </button>
                 <button
                     onClick={() => setActiveTab('comments')}
-                    className={`py-4 text-sm font-medium flex items-center gap-2 border-b-2 transition-colors whitespace-nowrap ${activeTab === 'comments'
+                    className={`py-3 px-1.5 text-xs font-semibold flex items-center gap-1 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'comments'
                         ? 'border-blue-600 text-blue-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    <MessageSquare className="w-4 h-4" />
+                    <MessageSquare className="w-3.5 h-3.5" />
                     Discussion
                 </button>
                 <button
                     onClick={() => setActiveTab('annotations')}
-                    className={`py-4 text-sm font-medium flex items-center gap-1.5 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'annotations'
+                    className={`py-3 px-1.5 text-xs font-semibold flex items-center gap-1 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'annotations'
                         ? 'border-indigo-600 text-indigo-600'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                 >
-                    <Atom className="w-4 h-4" />
+                    <Atom className="w-3.5 h-3.5" />
                     Annotations
                     {annotations.length > 0 && (
-                        <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full font-mono">
+                        <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1 py-0.2 rounded-full font-mono">
                             {annotations.length}
                         </span>
                     )}
                 </button>
                 <button
                     onClick={() => setActiveTab('viewlog')}
-                    className={`py-4 text-sm font-medium flex items-center gap-1.5 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'viewlog'
+                    className={`py-3 px-1.5 text-xs font-semibold flex items-center gap-1 border-b-2 transition-colors whitespace-nowrap cursor-pointer ${activeTab === 'viewlog'
                         ? 'border-emerald-600 text-emerald-700'
                         : 'border-transparent text-gray-500 hover:text-gray-700'
                         }`}
                     title="Inspection & Camera Movement Log Sheet"
                 >
-                    <Activity className="w-4 h-4" />
+                    <Activity className="w-3.5 h-3.5" />
                     View Log
                     {viewLogs.length > 0 && (
-                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full font-mono">
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-1 py-0.2 rounded-full font-mono">
                             {viewLogs.length}
                         </span>
                     )}

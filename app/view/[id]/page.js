@@ -8,7 +8,7 @@ import CsvViewer from '@/components/CsvViewer'
 import InteractionPanel from '@/components/InteractionPanel'
 import FileCarousel from '@/components/FileCarousel'
 import AtomAnnotationPopup from '@/components/AtomAnnotationPopup'
-import { ArrowLeft, Download, Share2, Loader2, Database, Box, FileText, UploadCloud, Plus, Copy, Check, Link2 } from 'lucide-react'
+import { ArrowLeft, Download, Share2, Loader2, Database, Box, FileText, UploadCloud, Plus, Copy, Check, Link2, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import Link from 'next/link'
 
 export default function ViewPage() {
@@ -21,6 +21,7 @@ export default function ViewPage() {
     const [uploadingCsv, setUploadingCsv] = useState(false)
     const [showShareLink, setShowShareLink] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [rightPanelOpen, setRightPanelOpen] = useState(true)
 
     const [ownerProfile, setOwnerProfile] = useState(null)
 
@@ -442,6 +443,20 @@ export default function ViewPage() {
                             </label>
                         ) : null}
                     </div>
+
+                    {/* Right Sidebar Toggle Button */}
+                    <button
+                        onClick={() => setRightPanelOpen(o => !o)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex-shrink-0 cursor-pointer ${
+                            rightPanelOpen
+                                ? 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
+                                : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-xs'
+                        }`}
+                        title={rightPanelOpen ? 'Collapse Notes & Info Panel for full-width 3D view' : 'Expand Notes, Discussion, Annotations & View Log Panel'}
+                    >
+                        {rightPanelOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                        <span className="hidden sm:inline">{rightPanelOpen ? 'Hide Panel' : 'Show Panel'}</span>
+                    </button>
                 </div>
 
                 {/* 2. Main Stage Content */}
@@ -493,7 +508,8 @@ export default function ViewPage() {
                 </div>
             </div>
 
-            {/* Right Panel: Project Metadata & Interactions */}
+            {/* Right Panel: Project Metadata & Interactions (Collapsible) */}
+            {rightPanelOpen && (
             <div className="w-[380px] flex flex-col border-l border-gray-200 bg-white flex-shrink-0">
                 {/* Header Metadata Card */}
                 <div className="p-5 border-b border-gray-200 bg-white space-y-4">
@@ -644,6 +660,7 @@ export default function ViewPage() {
                     />
                 </div>
             </div>
+            )}
         </div>
     )
 }
