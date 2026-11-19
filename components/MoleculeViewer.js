@@ -82,9 +82,6 @@ export default function MoleculeViewer({
     const controlsLeaveTimerRef = useRef(null)
     const cameraLeaveTimerRef = useRef(null)
 
-    const isControlsExpanded = controlsPinned || controlsHovered || Boolean(activeDrawer)
-    const isCameraExpanded = cameraPinned || cameraHovered || slabEnabled
-
     const handleControlsEnter = () => {
         if (controlsLeaveTimerRef.current) clearTimeout(controlsLeaveTimerRef.current)
         setControlsHovered(true)
@@ -137,6 +134,9 @@ export default function MoleculeViewer({
     const [selectedResidueKey, setSelectedResidueKey] = useState(null)
     const [showSequenceBar, setShowSequenceBar] = useState(false)
     const [activeDrawer, setActiveDrawer] = useState(null) // null | 'layers' | 'contacts' | 'measurements' | 'surface'
+
+    const isControlsExpanded = controlsPinned || controlsHovered || Boolean(activeDrawer)
+    const isCameraExpanded = cameraPinned || cameraHovered || slabEnabled
 
     // Per-Layer Visibility & Custom Style Overrides
     const [hiddenChains, setHiddenChains] = useState({})
