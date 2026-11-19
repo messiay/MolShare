@@ -74,8 +74,38 @@ export default function MoleculeViewer({
     // Core visualization state
     const [currentStyle, setCurrentStyle] = useState('cartoon')
     const [currentColor, setCurrentColor] = useState('chain')
-    const [controlsCollapsed, setControlsCollapsed] = useState(false)
-    const [cameraCollapsed, setCameraCollapsed] = useState(false)
+    // Hover-to-reveal auto-hide state (with Pin option to keep permanently open)
+    const [controlsPinned, setControlsPinned] = useState(false)
+    const [controlsHovered, setControlsHovered] = useState(false)
+    const [cameraPinned, setCameraPinned] = useState(false)
+    const [cameraHovered, setCameraHovered] = useState(false)
+    const controlsLeaveTimerRef = useRef(null)
+    const cameraLeaveTimerRef = useRef(null)
+
+    const isControlsExpanded = controlsPinned || controlsHovered || Boolean(activeDrawer)
+    const isCameraExpanded = cameraPinned || cameraHovered || slabEnabled
+
+    const handleControlsEnter = () => {
+        if (controlsLeaveTimerRef.current) clearTimeout(controlsLeaveTimerRef.current)
+        setControlsHovered(true)
+    }
+    const handleControlsLeave = () => {
+        if (controlsLeaveTimerRef.current) clearTimeout(controlsLeaveTimerRef.current)
+        controlsLeaveTimerRef.current = setTimeout(() => {
+            setControlsHovered(false)
+        }, 380)
+    }
+
+    const handleCameraEnter = () => {
+        if (cameraLeaveTimerRef.current) clearTimeout(cameraLeaveTimerRef.current)
+        setCameraHovered(true)
+    }
+    const handleCameraLeave = () => {
+        if (cameraLeaveTimerRef.current) clearTimeout(cameraLeaveTimerRef.current)
+        cameraLeaveTimerRef.current = setTimeout(() => {
+            setCameraHovered(false)
+        }, 380)
+    }
 
     // Surface state
     const [surfaceShowing, setSurfaceShowing] = useState(false)
@@ -1344,24 +1374,31 @@ export default function MoleculeViewer({
 
             {/* 2. Main 3D Interactive Canvas Stage */}
             <div className="flex-1 w-full h-full relative min-h-0 overflow-hidden">
-                {/* SINGLE UNIFIED COLLAPSIBLE FLOATING 3D WORKSTATION WIDGET */}
+                {/* SINGLE UNIFIED AUTO-HOVER COLLAPSIBLE FLOATING 3D WORKSTATION WIDGET */}
                 {!loading && !error && (
-                    controlsCollapsed ? (
-                        <button
-                            onClick={() => {
-                                setControlsCollapsed(false)
-                            }}
-                            className="absolute top-3 right-3 z-20 flex items-center gap-2 bg-white/95 hover:bg-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-md border border-gray-200/90 text-xs font-semibold text-gray-700 hover:text-indigo-600 transition-all cursor-pointer animate-in fade-in zoom-in-95 duration-150"
-                            title="Expand 3D Workstation Controls"
+                    !isControlsExpanded ? (
+                        <div
+                            onMouseEnter={handleControlsEnter}
+                            className="absolute top-0 right-0 z-20 pt-3 pr-3 pl-8 pb-4"
                         >
-                            <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
-                            <span>3D Controls</span>
-                            <span className="text-[10px] text-gray-400 font-mono capitalize">({currentStyle} · {clickMode})</span>
-                            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
-                        </button>
+                            <button
+                                onClick={() => setControlsPinned(true)}
+                                className="flex items-center gap-2 bg-white/95 hover:bg-white backdrop-blur-md px-3.5 py-2 rounded-2xl shadow-md border border-gray-200/90 text-xs font-semibold text-gray-700 hover:text-indigo-600 transition-all cursor-pointer animate-in fade-in zoom-in-95 duration-150"
+                                title="Hover to auto-expand, or click to pin 3D Workstation Controls open"
+                            >
+                                <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>3D Controls</span>
+                                <span className="text-[10px] text-gray-400 font-mono capitalize">({currentStyle} · {clickMode})</span>
+                                <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                            </button>
+                        </div>
                     ) : (
                         <div className="absolute top-3 left-3 right-3 z-20 flex justify-end pointer-events-none">
-                            <div className="pointer-events-auto flex flex-wrap items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl shadow-md border border-gray-200/90 text-xs max-w-full animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div
+                                onMouseEnter={handleControlsEnter}
+                                onMouseLeave={handleControlsLeave}
+                                className="pointer-events-auto flex flex-wrap items-center gap-1.5 bg-white/95 backdrop-blur-md px-2.5 py-1.5 rounded-2xl shadow-md border border-gray-200/90 text-xs max-w-full animate-in fade-in slide-in-from-top-1 duration-150"
+                            >
                                 {/* 1. Click Action Mode Switcher (Focus Pivot | Annotate | Distance) */}
                                 <div className="flex items-center bg-gray-100/90 p-0.5 rounded-xl border border-gray-200/80 gap-0.5">
                                     {[
@@ -1581,16 +1618,25 @@ export default function MoleculeViewer({
                                     </button>
                                 )}
 
-                                {/* Collapse All Button */}
+                                {/* Pin / Auto-Hide Toggle Button */}
                                 <button
                                     onClick={() => {
-                                        setControlsCollapsed(true)
-                                        setActiveDrawer(null)
+                                        if (controlsPinned) {
+                                            setControlsPinned(false)
+                                            setControlsHovered(false)
+                                            setActiveDrawer(null)
+                                        } else {
+                                            setControlsPinned(true)
+                                        }
                                     }}
-                                    className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition-colors cursor-pointer ml-0.5"
-                                    title="Collapse 3D controls into a single compact pill"
+                                    className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-colors cursor-pointer ml-0.5 border ${
+                                        controlsPinned
+                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-800'
+                                    }`}
+                                    title={controlsPinned ? 'Unpin to enable auto-hide on hover' : 'Pin controls permanently open'}
                                 >
-                                    <ChevronRight className="w-3.5 h-3.5" />
+                                    {controlsPinned ? 'Unpin' : 'Pin'}
                                 </button>
                             </div>
                         </div>
@@ -1997,10 +2043,14 @@ export default function MoleculeViewer({
                     </div>
                 )}
 
-                {/* BOTTOM-RIGHT: Collapsible Camera Pan D-Pad, Zoom, Auto-Spin, Depth Clipping (Slab) & 1D Sequence Toggle */}
+                {/* BOTTOM-RIGHT: Auto-Hover Collapsible Camera Pan D-Pad, Zoom, Auto-Spin, Depth Clipping (Slab) & 1D Sequence Toggle */}
                 {!loading && !error && (
-                    <div className="absolute bottom-3 right-3 z-20 flex flex-col items-end gap-2">
-                        {slabEnabled && !cameraCollapsed && (
+                    <div
+                        onMouseEnter={handleCameraEnter}
+                        onMouseLeave={handleCameraLeave}
+                        className="absolute bottom-0 right-0 z-20 pb-3 pr-3 pt-4 pl-6 flex flex-col items-end gap-2"
+                    >
+                        {slabEnabled && isCameraExpanded && (
                             <div className="bg-white/95 backdrop-blur-md px-3 py-2 rounded-2xl shadow-lg border border-gray-200 text-xs space-y-1.5 w-56">
                                 <div className="flex items-center justify-between font-bold text-gray-700">
                                     <span>Z-Slab Clipping Depth</span>
@@ -2033,18 +2083,18 @@ export default function MoleculeViewer({
                             </div>
                         )}
 
-                        {cameraCollapsed ? (
+                        {!isCameraExpanded ? (
                             <button
-                                onClick={() => setCameraCollapsed(false)}
+                                onClick={() => setCameraPinned(true)}
                                 className="flex items-center gap-1.5 bg-white/95 hover:bg-white backdrop-blur-md px-3 py-1.5 rounded-2xl shadow-md border border-gray-200/90 text-xs font-semibold text-gray-700 hover:text-indigo-600 transition-all cursor-pointer"
-                                title="Expand Camera & Navigation Controls"
+                                title="Hover to auto-expand, or click to pin Camera Controls open"
                             >
                                 <Move className="w-3.5 h-3.5 text-indigo-600" />
                                 <span>Camera</span>
                                 <ChevronUp className="w-3.5 h-3.5 text-gray-400" />
                             </button>
                         ) : (
-                            <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-md border border-gray-200/90">
+                            <div className="flex items-center gap-1.5 bg-white/95 backdrop-blur-md p-1.5 rounded-2xl shadow-md border border-gray-200/90 animate-in fade-in slide-in-from-bottom-1 duration-150">
                                 {/* 2D Pan Nudge Buttons */}
                                 <div className="flex items-center gap-0.5 bg-gray-50 border border-gray-200 rounded-xl px-1 py-0.5" title="Pan / Translate Molecule on Screen">
                                     <Move className="w-3 h-3 text-gray-400 mx-1" />
@@ -2132,13 +2182,24 @@ export default function MoleculeViewer({
                                     </button>
                                 )}
 
-                                {/* Collapse Camera Dock */}
+                                {/* Pin / Auto-Hide Camera Dock */}
                                 <button
-                                    onClick={() => setCameraCollapsed(true)}
-                                    className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700 cursor-pointer"
-                                    title="Collapse Camera Controls"
+                                    onClick={() => {
+                                        if (cameraPinned) {
+                                            setCameraPinned(false)
+                                            setCameraHovered(false)
+                                        } else {
+                                            setCameraPinned(true)
+                                        }
+                                    }}
+                                    className={`px-2 py-1 rounded-xl text-[10px] font-bold transition-colors cursor-pointer border ${
+                                        cameraPinned
+                                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                                            : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100 hover:text-gray-800'
+                                    }`}
+                                    title={cameraPinned ? 'Unpin to enable auto-hide on hover' : 'Pin Camera Controls open'}
                                 >
-                                    <ChevronRight className="w-3.5 h-3.5" />
+                                    {cameraPinned ? 'Unpin' : 'Pin'}
                                 </button>
                             </div>
                         )}

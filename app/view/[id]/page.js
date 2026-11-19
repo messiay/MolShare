@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { supabase } from '@/utils/supabase'
 import { useParams, useRouter } from 'next/navigation'
 
@@ -21,7 +21,41 @@ export default function ViewPage() {
     const [uploadingCsv, setUploadingCsv] = useState(false)
     const [showShareLink, setShowShareLink] = useState(false)
     const [copied, setCopied] = useState(false)
-    const [rightPanelOpen, setRightPanelOpen] = useState(true)
+
+    // Auto-hover + Pin state for Right Panel and Top Bar
+    const [rightPanelPinned, setRightPanelPinned] = useState(false)
+    const [rightPanelHovered, setRightPanelHovered] = useState(false)
+    const [topBarPinned, setTopBarPinned] = useState(false)
+    const [topBarHovered, setTopBarHovered] = useState(false)
+    const rightLeaveTimerRef = useRef(null)
+    const topLeaveTimerRef = useRef(null)
+
+    const isRightPanelVisible = rightPanelPinned || rightPanelHovered || showShareLink
+    const isTopBarVisible = topBarPinned || topBarHovered || uploadingCsv
+
+    const handleRightEnter = () => {
+        if (rightLeaveTimerRef.current) clearTimeout(rightLeaveTimerRef.current)
+        setRightPanelHovered(true)
+    }
+    const handleRightLeave = () => {
+        if (rightLeaveTimerRef.current) clearTimeout(rightLeaveTimerRef.current)
+        rightLeaveTimerRef.current = setTimeout(() => {
+            const activeTag = document.activeElement?.tagName?.toLowerCase()
+            if (activeTag === 'textarea' || activeTag === 'input') return
+            setRightPanelHovered(false)
+        }, 420)
+    }
+
+    const handleTopEnter = () => {
+        if (topLeaveTimerRef.current) clearTimeout(topLeaveTimerRef.current)
+        setTopBarHovered(true)
+    }
+    const handleTopLeave = () => {
+        if (topLeaveTimerRef.current) clearTimeout(topLeaveTimerRef.current)
+        topLeaveTimerRef.current = setTimeout(() => {
+            setTopBarHovered(false)
+        }, 400)
+    }
 
     const [ownerProfile, setOwnerProfile] = useState(null)
 
@@ -372,11 +406,35 @@ export default function ViewPage() {
     })
 
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white">
-            {/* Left Main Stage: Clean Top Nav & Canvas */}
+        <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-white relative">
+            {/* Left Main Stage: Auto-Hover Top Nav & Full-Screen Canvas */}
             <div className="flex-1 relative bg-slate-100 flex flex-col min-w-0 overflow-hidden">
-                {/* 1. Aligned Top Navigation Bar */}
-                <div className="h-15 bg-white border-b border-gray-200 px-4 flex items-center justify-between gap-3 flex-shrink-0 z-20 shadow-xs">
+                {/* Top Edge Auto-Hover Trigger Handle (when Top Bar is unpinned & hidden) */}
+                {!isTopBarVisible && (
+                    <div
+                        onMouseEnter={handleTopEnter}
+                        className="absolute top-0 left-0 right-0 h-5 z-30 flex justify-center"
+                    >
+                        <button
+                            onClick={() => setTopBarPinned(true)}
+                            className="h-5 px-4 bg-white/90 hover:bg-white border border-t-0 border-gray-200 rounded-b-xl shadow-xs text-[10px] font-bold text-gray-500 hover:text-indigo-600 flex items-center gap-1.5 transition-all cursor-pointer"
+                            title="Hover to reveal Project Navigation & Files, or click to pin"
+                        >
+                            <span>Files & Navigation</span>
+                            <span className="text-indigo-500">▾</span>
+                        </button>
+                    </div>
+                )}
+
+                {/* 1. Aligned Top Navigation Bar (Docked when Pinned, Floating Overlay on Hover) */}
+                {isTopBarVisible && (
+                <div
+                    onMouseEnter={handleTopEnter}
+                    onMouseLeave={handleTopLeave}
+                    className={`h-15 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 flex items-center justify-between gap-3 flex-shrink-0 z-30 shadow-sm ${
+                        topBarPinned ? 'relative' : 'absolute top-0 left-0 right-0 animate-in fade-in slide-in-from-top-2 duration-150'
+                    }`}
+                >
                     {/* Back link */}
                     <Link
                         href="/dashboard"
@@ -444,20 +502,49 @@ export default function ViewPage() {
                         ) : null}
                     </div>
 
-                    {/* Right Sidebar Toggle Button */}
-                    <button
-                        onClick={() => setRightPanelOpen(o => !o)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all flex-shrink-0 cursor-pointer ${
-                            rightPanelOpen
-                                ? 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
-                                : 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-xs'
-                        }`}
-                        title={rightPanelOpen ? 'Collapse Notes & Info Panel for full-width 3D view' : 'Expand Notes, Discussion, Annotations & View Log Panel'}
-                    >
-                        {rightPanelOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-                        <span className="hidden sm:inline">{rightPanelOpen ? 'Hide Panel' : 'Show Panel'}</span>
-                    </button>
+                    {/* Pin Top Bar & Pin Right Panel Controls */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <button
+                            onClick={() => {
+                                if (topBarPinned) {
+                                    setTopBarPinned(false)
+                                    setTopBarHovered(false)
+                                } else {
+                                    setTopBarPinned(true)
+                                }
+                            }}
+                            className={`px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                                topBarPinned
+                                    ? 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-600 border-gray-200'
+                            }`}
+                            title={topBarPinned ? 'Unpin top bar to enable auto-hide on hover' : 'Pin top bar permanently'}
+                        >
+                            {topBarPinned ? 'Unpin Top' : 'Pin Top'}
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                if (rightPanelPinned) {
+                                    setRightPanelPinned(false)
+                                    setRightPanelHovered(false)
+                                } else {
+                                    setRightPanelPinned(true)
+                                }
+                            }}
+                            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer ${
+                                rightPanelPinned
+                                    ? 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-200'
+                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200'
+                            }`}
+                            title={rightPanelPinned ? 'Unpin right panel to enable hover reveal' : 'Pin Notes, Annotations & View Log Panel open'}
+                        >
+                            {rightPanelPinned ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                            <span className="hidden sm:inline">{rightPanelPinned ? 'Unpin Panel' : 'Pin Panel'}</span>
+                        </button>
+                    </div>
                 </div>
+                )}
 
                 {/* 2. Main Stage Content */}
                 <div className="flex-1 w-full h-full relative min-h-0">
@@ -508,9 +595,36 @@ export default function ViewPage() {
                 </div>
             </div>
 
-            {/* Right Panel: Project Metadata & Interactions (Collapsible) */}
-            {rightPanelOpen && (
-            <div className="w-[380px] flex flex-col border-l border-gray-200 bg-white flex-shrink-0">
+            {/* Right Edge Auto-Hover Trigger Zone (when Right Panel is unpinned & hidden) */}
+            {!isRightPanelVisible && (
+                <div
+                    onMouseEnter={handleRightEnter}
+                    className="absolute top-0 right-0 bottom-0 w-5 z-30 flex items-center justify-end"
+                >
+                    <button
+                        onClick={() => setRightPanelPinned(true)}
+                        className="py-4 px-1.5 bg-white/95 hover:bg-white border border-r-0 border-gray-200 rounded-l-xl shadow-md text-[11px] font-bold text-gray-600 hover:text-indigo-600 flex flex-col items-center gap-1 transition-all cursor-pointer"
+                        title="Hover to slide out Notes, Discussion, Annotations & View Log — or click to pin"
+                    >
+                        <PanelRightOpen className="w-3.5 h-3.5 text-indigo-600" />
+                        <span style={{ writingMode: 'vertical-rl' }} className="tracking-wide uppercase text-[10px]">
+                            Notes & Log
+                        </span>
+                    </button>
+                </div>
+            )}
+
+            {/* Right Panel: Project Metadata & Interactions (Auto-Hover Slide-Out or Pinned) */}
+            {isRightPanelVisible && (
+            <div
+                onMouseEnter={handleRightEnter}
+                onMouseLeave={handleRightLeave}
+                className={`w-[380px] flex flex-col border-l border-gray-200 bg-white flex-shrink-0 ${
+                    rightPanelPinned
+                        ? 'relative'
+                        : 'absolute top-0 right-0 bottom-0 z-30 shadow-2xl animate-in fade-in slide-in-from-right-4 duration-150'
+                }`}
+            >
                 {/* Header Metadata Card */}
                 <div className="p-5 border-b border-gray-200 bg-white space-y-4">
                     {/* Top Row: Format Badge & Action Buttons */}
@@ -554,6 +668,25 @@ export default function ViewPage() {
                                 <Download className="w-3.5 h-3.5" />
                                 <span>Structure</span>
                             </a>
+
+                            <button
+                                onClick={() => {
+                                    if (rightPanelPinned) {
+                                        setRightPanelPinned(false)
+                                        setRightPanelHovered(false)
+                                    } else {
+                                        setRightPanelPinned(true)
+                                    }
+                                }}
+                                className={`px-2 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${
+                                    rightPanelPinned
+                                        ? 'bg-indigo-600 text-white border-indigo-600'
+                                        : 'bg-gray-50 hover:bg-gray-100 text-gray-600 border-gray-200'
+                                }`}
+                                title={rightPanelPinned ? 'Unpin to auto-hide on mouse leave' : 'Pin panel permanently open'}
+                            >
+                                {rightPanelPinned ? 'Pinned' : 'Pin'}
+                            </button>
                         </div>
                     </div>
 
